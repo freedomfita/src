@@ -7,14 +7,20 @@ import (
   "fmt"
 )
 
+type Contact struct {
+  NodeID ID
+  IPAddr string
+  Port uint16
+}
+
 // Core Kademlia type. You can put whatever state you want in this.
 type Kademlia struct {
-    NodeID ID
+  ThisNode Contact
+  K_Buckets[][] Contact
 }
 
 func NewKademlia() *Kademlia {
     // Assign this node a semi-random ID and prepare other state here.
-  
-}
 
+}
 
