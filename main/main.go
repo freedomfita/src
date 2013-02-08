@@ -54,14 +54,7 @@ func main() {
     }
     
 }
-
-func chan_test(msg string, c chan string) {
-	for i:=0; ; i++ {
-		c<- fmt.Sprintf("%s %d", msg, i)
-		time.Sleep(time.Second)
-	}
-}
-
+//enter in shell as "run host:port host:port"
 func Run(args []string) int {
     if len(args) == 0 {
 	return 0
@@ -73,13 +66,14 @@ func Run(args []string) int {
 	log.Fatal("Must be invoked with exactly two arguments!\n")
     }
 
-
+    //args in form "host:port"
     listenStr := args[0]
     firstPeerStr := args[1]
 
     fmt.Printf("kademlia starting up!\n")
     kadem := kademlia.NewKademlia()
-
+    
+    //Register on server
     rpc.Register(kadem)
     rpc.HandleHTTP()
     l, err := net.Listen("tcp", listenStr)
