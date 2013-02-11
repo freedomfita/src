@@ -2,10 +2,10 @@ package kademlia
 // Contains the core kademlia type. In addition to core state, this type serves
 // as a receiver for the RPC methods, which is required by that package.
 
-import (
-  "net"
-  "fmt"
-)
+//import (
+  //"net"
+  //"fmt"
+//)
 
 type Contact struct {
   NodeID ID
@@ -21,6 +21,6 @@ type Kademlia struct {
 
 func NewKademlia() *Kademlia {
     // Assign this node a semi-random ID and prepare other state here.
-
+	return new(Kademlia)
 }
 
