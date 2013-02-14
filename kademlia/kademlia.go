@@ -21,6 +21,7 @@ type Contact struct {
 type Kademlia struct {
   ThisContact Contact
   K_Buckets []Bucket
+  Data map[ID]([]byte)
   bucket_sizes []int
 }
 
@@ -64,5 +65,7 @@ func (kadem *Kademlia) AddContactToBuckets(node *Contact) int {
 	
 	bucket[kadem.bucket_sizes[idx]] = node
 	kadem.bucket_sizes[idx] += 1
+	
+	/* check if bucket is full; if it is, we need to remove a node first. */
 	return 0
 }

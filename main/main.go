@@ -63,7 +63,7 @@ func main() {
 	    	// k and b are just placeholders for now
 	    	var k kademlia.ID
 	    	var b []byte
-	    	store(k,arg_s[2],b)
+	    	iterativeStore(k,b)
 	    } else if arg_s[0] == "find_node" && is_cmd_valid(arg_s,1,true) {
 	    	find_node(arg_s[1])
 	    } else if arg_s[0] == "find_value" && is_cmd_valid(arg_s,1,true) {
@@ -131,6 +131,7 @@ func is_cmd_valid(cmd []string, argc int, status bool) bool {
 	return true
 }
 
+// execute the ping RPC given either a nodeID or a host:port pair
 func ping(nodeToPing string) int {
 	// if the argument is not of the form host:port, assume that it is a nodeID and 
 	// look up the corresponding host/port pair
@@ -168,8 +169,25 @@ func ping(nodeToPing string) int {
 	return 1
 }
 
-func store(nodeID kademlia.ID, key string, data []byte) int {
-	return 0
+func store(hostAndPort string, key kademlia.ID, data []byte) int {
+	client, err := rpc.DialHTTP("tcp", hostAndPort)
+	if err != nil {
+		log.Fatal("DialHTTP: ", err)
+    }
+    
+    /* initialize the Request and Result structs */
+    req := new(kademlia.StoreRequest)
+    req.MsgID = kademlia.NewRandomID()
+    req.Key = key
+    req.Value = data
+    
+    var res kademlia.StoreResult
+
+	err = client.Call("Kademlia.Store", req, &res)
+    if err != nil {
+		log.Fatal("Call: ", err)
+    }
+	return 1
 }
 func find_node(key string) int {
 	return 0
@@ -188,8 +206,51 @@ func get_node_id() int {
 Perform the iterativeStore operation and then print the ID of the node that
 received the final STORE operation.
 */
-func iterativeStore(key string, value []byte) int {
-	return 0
+func iterativeStore(key kademlia.ID, value []byte) int {
+
+	prevDistance := key.Xor(thisNode.ThisContact.NodeID)
+	
+	var closestNode kademlia.FoundNode
+	
+	hostPort := make([]string, 2)
+	hostPort[0] = thisNode.ThisContact.IPAddr
+	hostPort[1] = strconv.FormatUint(uint64(thisNode.ThisContact.Port),10)
+	hostPortStr := strings.Join(hostPort, ":")
+	
+	for true {
+		
+		client, err := rpc.DialHTTP("tcp", hostPortStr)
+		if err != nil {
+			log.Fatal("DialHTTP: ", err)
+		}
+		req := new(kademlia.FindNodeRequest)
+		req.MsgID = kademlia.NewRandomID()
+		req.NodeID = key
+	
+		var res kademlia.FindNodeResult
+	
+		err = client.Call("Kademlia.FindNode", req, &res)
+    	if err != nil {
+			log.Fatal("Call: ", err)
+    	}
+    	// obviously we need to do something with the array here, not just take the first element
+    	curDistance := key.Xor(res.Nodes[0].NodeID)
+    	
+    	if !curDistance.Less(prevDistance) {
+    		closestNode = res.Nodes[0]
+    		break
+    	}
+    	hostPort[0] = closestNode.IPAddr
+		hostPort[1] = strconv.FormatUint(uint64(closestNode.Port),10)
+		hostPortStr = strings.Join(hostPort, ":")
+	}
+	
+	hostPort[0] = closestNode.IPAddr
+	hostPort[1] = strconv.FormatUint(uint64(closestNode.Port),10)
+	hostPortStr = strings.Join(hostPort, ":")
+	store(hostPortStr, key, value)
+	log.Printf("NodeID receiving STORE operation: %d\n",closestNode.NodeID)
+	return 1
 }
 
 /*
