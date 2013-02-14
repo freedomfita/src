@@ -231,7 +231,7 @@ func iterativeStore(key kademlia.ID, value []byte) int {
 		req.NodeID = key
 	
 		var res kademlia.FindNodeResult
-	
+		//if FindNode works, all of the closest nodes should be in res.
 		err = client.Call("Kademlia.FindNode", req, &res)
     		if err != nil {
 			log.Fatal("Call: ", err)

@@ -98,9 +98,16 @@ func (k *Kademlia) Find_Closest(req_id ID, count int) []Contact{
 		}
 	}
 	//Once full we need to sort. I'm being lazy and saving this for later
+	nodes = Sort_Contacts(nodes)
 	return nodes
 }
 
+//make sort function if above sorting isn't valid
+func Sort_Contacts(arr []Contact) []Contact {
+	///sorted_arr := make([]Contact, len(arr))
+	
+	return arr//sorted_arr
+}
 
 // FIND_VALUE
 type FindValueRequest struct {
@@ -119,6 +126,13 @@ type FindValueResult struct {
 
 func (k *Kademlia) FindValue(req FindValueRequest, res *FindValueResult) error {
     // TODO: Implement.
+    if !k.ThisContact.NodeID.Equals(req.Key){//don't know exactly what we're checking
+    	
+    } //if we don't have value it acts like find node. Don't know if that means that we just
+      //can call FindNode with it, because that would be easy, but FindValueResult isn't currently a triple
+      
+      
+      
     return nil
 }
 
