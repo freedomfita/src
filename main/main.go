@@ -210,13 +210,16 @@ func iterativeStore(key kademlia.ID, value []byte) int {
 
 	prevDistance := key.Xor(thisNode.ThisContact.NodeID)
 	
-	var closestNode kademlia.FoundNode
+	//var closestNode kademlia.FoundNode
+	var closestNode kademlia.Contact
 	
 	hostPort := make([]string, 2)
 	hostPort[0] = thisNode.ThisContact.IPAddr
 	hostPort[1] = strconv.FormatUint(uint64(thisNode.ThisContact.Port),10)
 	hostPortStr := strings.Join(hostPort, ":")
 	
+	//closestnode may want to be its own function that we call from FindNode, or at least
+	//that code should be in FindNode, since we need to populate res.Nodes with more than one bucket
 	for true {
 		
 		client, err := rpc.DialHTTP("tcp", hostPortStr)
@@ -230,17 +233,17 @@ func iterativeStore(key kademlia.ID, value []byte) int {
 		var res kademlia.FindNodeResult
 	
 		err = client.Call("Kademlia.FindNode", req, &res)
-    	if err != nil {
+    		if err != nil {
 			log.Fatal("Call: ", err)
-    	}
-    	// obviously we need to do something with the array here, not just take the first element
-    	curDistance := key.Xor(res.Nodes[0].NodeID)
+    		}
+    		// obviously we need to do something with the array here, not just take the first element
+    		curDistance := key.Xor(res.Nodes[0].NodeID)
     	
-    	if !curDistance.Less(prevDistance) {
-    		closestNode = res.Nodes[0]
-    		break
-    	}
-    	hostPort[0] = closestNode.IPAddr
+    		if !curDistance.Less(prevDistance) {
+    			closestNode = res.Nodes[0]
+    			break
+    		}
+    		hostPort[0] = closestNode.IPAddr
 		hostPort[1] = strconv.FormatUint(uint64(closestNode.Port),10)
 		hostPortStr = strings.Join(hostPort, ":")
 	}
