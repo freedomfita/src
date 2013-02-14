@@ -46,8 +46,10 @@ func LookupContact(thisNode *Kademlia, lookupID ID) *Contact {
 
 func (bucket Bucket) FindNode(id ID) *Contact {
     for i := 0; i < len(bucket); i++ {
-        if bucket[i].NodeID == id {
-            return bucket[i]
+    	if bucket[i] != nil {
+        	if bucket[i].NodeID == id {
+            	return bucket[i]
+        	}
         }
     }
     return nil
