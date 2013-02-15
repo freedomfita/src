@@ -270,7 +270,7 @@ func iterativeStore(key kademlia.ID, value []byte) int {
 Print a list of ≤ k closest nodes and print their IDs. You should collect
 the IDs in a slice and print that.
 */
-<<<<<<< HEAD
+
 func iterativeFindNode(id kademlia.ID) kademlia.Bucket{ 
 	//Get 20 closest nodes from us.
 	req := new(kademlia.FindNodeRequest)
@@ -311,10 +311,6 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket{
 		big_arr[start:end] = res.Nodes
 		
 	}
-=======
-func iterativeFindNode(ID kademlia.ID) kademlia.Bucket { 
->>>>>>> changed the mechanics of ping a bit and changed some stuff in run
-	
 	return nil
 }
 
