@@ -279,7 +279,46 @@ func iterativeStore(key kademlia.ID, value []byte) int {
 Print a list of ≤ k closest nodes and print their IDs. You should collect
 the IDs in a slice and print that.
 */
-func iterativeFindNode(ID kademlia.ID) []*kademlia.Contact { 
+func iterativeFindNode(id kademlia.ID) kademlia.Bucket{ 
+	//Get 20 closest nodes from us.
+	req := new(kademlia.FindNodeRequest)
+	req.NodeID = id
+	req.MsgID = kademlia.NewRandomID()
+	var k_res kademlia.FindNodeResult
+	err := thisNode.FindNode(req,&k_res)
+	k_closest := k_res.Nodes
+	if err != nil {
+		log.Fatal("Call: ", err)
+    	}
+	//initialize array to hold all 20^2 contacts, which we'll sort later
+	big_arr := make([]kademlia.Contact, 400)
+	count := 0
+	for i :=0;i<len(k_closest);i++{
+		//find 20 closest for each node.
+		hostPort := make([]string, 2)
+		hostPort[0] = k_closest[i].IPAddr
+		hostPort[1] = strconv.FormatUint(uint64(k_closest[i].Port),10)
+		hostPortStr := strings.Join(hostPort, ":")
+		
+		client, err := rpc.DialHTTP("tcp", hostPortStr)
+		if err != nil {
+			log.Fatal("DialHTTP: ", err)
+		}
+		req := new(kademlia.FindNodeRequest)
+		req.MsgID = kademlia.NewRandomID()
+		req.NodeID = id
+			
+		var res kademlia.FindNodeResult
+		//if FindNode works, all of the closest nodes should be in res.
+		err = client.Call("Kademlia.FindNode", req, &res)
+		if err != nil {
+			log.Fatal("Call: ", err)
+    		}
+    		start := i * 20
+    		end := (i * 20) + 20
+		big_arr[start:end] = res.Nodes
+		
+	}
 	
 	return nil
 }
