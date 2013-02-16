@@ -198,7 +198,7 @@ func store(hostAndPort string, key kademlia.ID, data []byte) int {
     }
 	return 1
 }
--func find_node(key kademlia.ID) int {
+func find_node(key kademlia.ID) int {
 	bucket,_ := thisNode.GetBucket(key)
 	nodes := bucket.FindNode(key)
 	fmt.Println(nodes)
@@ -292,7 +292,7 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket{
 		log.Fatal("Call: ", err)
     	}
 	//initialize array to hold all 20^2 contacts, which we'll sort later
-	big_arr := make([]kademlia.Contact, 400)
+	big_arr := make(kademlia.Bucket, 400)
 	for i :=0;i<len(k_closest);i++{
 		//find 20 closest for each node.
 		hostPort := make([]string, 2)
@@ -315,13 +315,13 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket{
 			log.Fatal("Call: ", err)
     		}
     		offset:= 20 * i
-		for j := 0; j<20; j++{
-			big_arr[j+offset] = res.Nodes[j]
+		for j := 0; j<len(res.Nodes); j++{
+			*big_arr[j+offset] = res.Nodes[j]
 		}
 		
 	}
 	
-	return nil
+	return big_arr
 }
 
 /*
