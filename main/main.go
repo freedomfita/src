@@ -231,7 +231,7 @@ func iterativeStore(key kademlia.ID, value []byte) int {
 	prevDistance := key.Xor(thisNode.ThisContact.NodeID)
 	
 	//var closestNode kademlia.FoundNode
-	var closestNode kademlia.Contact
+	var closestNode *kademlia.Contact
 	
 	hostPort := make([]string, 2)
 	hostPort[0] = thisNode.ThisContact.IPAddr
@@ -264,9 +264,9 @@ func iterativeStore(key kademlia.ID, value []byte) int {
     			break
     		}
     		hostPort[0] = closestNode.IPAddr
-		hostPort[1] = strconv.FormatUint(uint64(closestNode.Port),10)
-		hostPortStr = strings.Join(hostPort, ":")
-	}
+			hostPort[1] = strconv.FormatUint(uint64(closestNode.Port),10)
+			hostPortStr = strings.Join(hostPort, ":")
+		}
 	
 	hostPort[0] = closestNode.IPAddr
 	hostPort[1] = strconv.FormatUint(uint64(closestNode.Port),10)
@@ -280,7 +280,7 @@ func iterativeStore(key kademlia.ID, value []byte) int {
 Print a list of ≤ k closest nodes and print their IDs. You should collect
 the IDs in a slice and print that.
 */
-func iterativeFindNode(id kademlia.ID) kademlia.Bucket{ 
+func iterativeFindNode(id kademlia.ID) kademlia.Bucket { 
 	//Get 20 closest nodes from us.
 	req := new(kademlia.FindNodeRequest)
 	req.NodeID = id
@@ -316,18 +316,68 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket{
     		}
     		offset:= 20 * i
 		for j := 0; j<len(res.Nodes); j++{
-			*big_arr[j+offset] = res.Nodes[j]
+			big_arr[j+offset] = res.Nodes[j]
 		}
 		
 	}
-	
-	return big_arr
+	return (kademlia.Sort_Contacts(big_arr))[:20]
 }
 
 /*
 printf("%v %v\n", ID, value), where ID refers to the node that finally
 returned the value. If you do not find a value, print "ERR".
 */
-func iterativeFindValue(key string) int {
-	return 0
+func iterativeFindValue(key /*kademlia.ID*/ string) *kademlia.Contact {
+	/*const alpha := 3
+	shortlist := make(kademlia.Bucket,3)
+	shortlist_size := 0
+	// The search begins by selecting alpha contacts from the non-empty k-bucket closest to the 
+	// bucket appropriate to the key being searched on.
+	_, bucket_num := thisNode.GetBucket(key.Xor(thisNode.ThisContact.NodeID))
+	for i := 0; i < 20; i++ {
+		if thisNode.K_Buckets[i] != nil {
+			shortlist[shortlist_size] = thisNode.K_Buckets[i]
+		}
+		if shortlist_size >= 
+	}
+	// If there are fewer than alpha contacts in that bucket, contacts are selected from other buckets.
+	for b_idx := 0; b < kademlia.NumBuckets; b++ {
+		if b_idx != bucket_num {
+			
+		}
+	}
+	// The contact closest to the target key, closestNode, is noted.
+	closestNode := kademlia.Sort_Contacts(shortlist)[0]
+// The node then sends parallel, asynchronous FIND_* RPCs to the alpha contacts in the 
+// shortlist. Each contact, if it is live, should normally return k triples. If any of the 
+// alpha contacts fails to reply, it is removed from the shortlist, at least temporarily.
+
+// The node then fills the shortlist with contacts from the replies received. These are those closest to the target. From the shortlist it selects another alpha contacts. The only condition for this selection is that they have not already been contacted. Once again a FIND_* RPC is sent to each in parallel.
+
+// Each such parallel search updates closestNode, the closest node seen so far.
+
+// The sequence of parallel searches is continued until either no node in the sets returned is closer than the closest node already seen or the initiating node has accumulated k probed and known to be active contacts.
+
+// If a cycle doesn't find a closer node, if closestNode is unchanged, then the 
+// initiating node sends a FIND_* RPC to each of the k closest nodes that it has not already queried.
+
+// At the end of this process, the node will have accumulated a set of k active contacts 
+// or (if the RPC was FIND_VALUE) may have found a data value. Either a set of triples or 
+// the value is returned to the caller.
+
+Kademlia uses a value of 3 for alpha, the degree of parallelism used. It appears that (see stutz06) this value is optimal.
+
+There are at least three approaches to managing parallelism. The first is to launch alpha probes and wait until all have succeeded or timed out before iterating. This is termed strict parallelism. The second is to limit the number of probes in flight to alpha; whenever a probe returns a new one is launched. We might call this bounded parallelism. A third is to iterate after what seems to be a reasonable delay (duration unspecified), so that the number of probes in flight is some low multiple of alpha. This is loose parallelism and the approach used by Kademlia.
+*/
+/*
+	req := new(kademlia.FindValueRequest)
+	req.MsgID = kademlia.NewRandomID()
+	req.Key = key
+	var res kademlia.FindValueResult
+	
+	for true {
+	
+	}
+	*/
+	return nil
 }

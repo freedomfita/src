@@ -12,14 +12,14 @@ const NumBuckets = 160
 type Bucket []*Contact
 
 type Contact struct {
-  	NodeID ID
+  NodeID ID
   IPAddr string
   Port uint16
 }
 
 // Core Kademlia type. You can put whatever state you want in this.
 type Kademlia struct {
-  ThisContact Contact
+  ThisContact *Contact
   K_Buckets []Bucket
   Data map[ID]([]byte)
   bucket_sizes []int

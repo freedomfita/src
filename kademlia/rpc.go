@@ -3,6 +3,9 @@ package kademlia
 // strictly to these to be compatible with the reference implementation and
 // other groups' code.
 
+import (
+	"errors"
+)
 
 // PING
 type Ping struct {
@@ -17,7 +20,7 @@ type Pong struct {
 func (k *Kademlia) Ping(ping Ping, pong *Pong) error {
     // This one's a freebie.
     pong.MsgID = CopyID(ping.MsgID)
-    pong.Sender = k.ThisContact
+    pong.Sender = *k.ThisContact
     return nil
 }
 
@@ -59,7 +62,7 @@ type FoundNode struct {
 type FindNodeResult struct {
     MsgID ID
     //Nodes []FoundNode
-    Nodes []Contact
+    Nodes []*Contact
     Err error
 }
 
@@ -73,13 +76,13 @@ func (k *Kademlia) FindNode(req *FindNodeRequest, res *FindNodeResult) error {
     return nil
 }
 
-func (k *Kademlia) Find_Closest(req_id ID, count int) []Contact{
+func (k *Kademlia) Find_Closest(req_id ID, count int) []*Contact{
 	b_num := req_id.Xor(k.ThisContact.NodeID).PrefixLen() //get bucket number
 	b := k.K_Buckets[b_num] //get corresponding bucket
-	nodes := make([]Contact, count)  //make node array
+	nodes := make([]*Contact, count)  //make node array
 	j := 0
 	for i:=0;i<len(b) && i<count;i++{ //we copy all contacts from closest bucket
-		nodes[i] = *b[i]
+		nodes[i] = b[i]
 		j++
 	}
 	//then if there is still room, we add neighboring buckets' contacts
@@ -87,14 +90,14 @@ func (k *Kademlia) Find_Closest(req_id ID, count int) []Contact{
 		if b_num-i >= 0{ //copy bucket below
 			b = k.K_Buckets[b_num - i]
 			for c:=0; j<count && c<len(b);c++{
-				nodes[j] = *b[c]
+				nodes[j] = b[c]
 				j++
 			}
 		}
 		if b_num+i < 160{ //copy bucket above
 			b = k.K_Buckets[b_num + i]
 			for c:=0; j<count && c<len(b);c++{
-				nodes[j] = *b[c]
+				nodes[j] = b[c]
 				j++
 			}
 		}
@@ -105,7 +108,7 @@ func (k *Kademlia) Find_Closest(req_id ID, count int) []Contact{
 }
 
 //make sort function if above sorting isn't valid
-func Sort_Contacts(arr []Contact) []Contact {
+func Sort_Contacts(arr Bucket) Bucket {
 	///sorted_arr := make([]Contact, len(arr))
 	for i:=1;i<len(arr);i++{
 		insert_val := arr[i]
@@ -131,19 +134,25 @@ type FindValueRequest struct {
 type FindValueResult struct {
     MsgID ID
     Value []byte
-    Nodes []FoundNode
+    Nodes []*Contact
     Err error
 }
 
 func (k *Kademlia) FindValue(req FindValueRequest, res *FindValueResult) error {
     // TODO: Implement.
-    if !k.ThisContact.NodeID.Equals(req.Key){//don't know exactly what we're checking
-    	
-    } //if we don't have value it acts like find node. Don't know if that means that we just
-      //can call FindNode with it, because that would be easy, but FindValueResult isn't currently a triple
-      
-      
-      
+    for key,val := range k.Data {
+    	if key.Equals(req.Key) {
+    		res.MsgID = CopyID(req.MsgID)
+    		// can we just do this here, or need to Copy(val) ?
+    		res.Value = val
+    		res.Nodes = nil
+    		res.Err = nil
+    		return nil
+    	}
+    }
+    res.Value = nil
+    res.Nodes = k.Find_Closest(k.ThisContact.NodeID,20)
+    res.Err = errors.New("Value not found")
     return nil
 }
 
