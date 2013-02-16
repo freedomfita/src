@@ -21,7 +21,8 @@ import (
 
 var running bool
 var thisNode *kademlia.Kademlia
-
+//myIP 192.168.0.145:7890
+//MoritzIP 192.168.0.123:7890
 func main() {
 
 	running = false
@@ -65,19 +66,11 @@ func main() {
 	    	var b []byte
 	    	iterativeStore(k,b)
 	    } else if arg_s[0] == "find_node" && is_cmd_valid(arg_s,1,true) {
-	    	id, err := kademlia.FromString(arg_s[1])
-	    	if err != nil {
-	    		log.Fatal("Find Node: ",err)
-	    	}
-	    	find_node(id)
+	    	find_node(arg_s[1])
 	    } else if arg_s[0] == "find_value" && is_cmd_valid(arg_s,1,true) {
 	    	find_value(arg_s[1])
 	    } else if arg_s[0] == "get_local_value" && is_cmd_valid(arg_s,1,true) {
-	    	id, err := kademlia.FromString(arg_s[1])
-	    	if err != nil {
-	    		log.Fatal("Get Local Value: ",err)
-	    	}
-	    	get_local_value(id)
+	    	get_local_value(arg_s[1])
 	    } else if arg_s[0] == "get_node_id" && is_cmd_valid(arg_s,0,true) {
 	    	get_node_id()
 	    } else {
@@ -104,14 +97,23 @@ func run(listenStr string, firstPeerStr string) int {
     go http.Serve(l, nil)
 	running = true
 	
-	// ping the first peer
-	firstPeerContact := ping(firstPeerStr)
-	// find and add the closest contacts to this node
-	closestContacts := iterativeFindNode(firstPeerContact.NodeID)
-	for i := 0; i < len(closestContacts); i++ {
-		thisNode.AddContactToBuckets(closestContacts[i])
-	}
-	return 1
+	
+	/*
+	Add the first contact. For now, just create a new contact with host, port and a random nodeID
+	*/
+	firstContact := new(kademlia.Contact)
+	hostAndPort := strings.Split(firstPeerStr, ":")
+	firstContact.IPAddr = hostAndPort[0]
+	portInt,_ := strconv.Atoi(hostAndPort[1])
+	firstContact.Port = uint16(portInt)
+	firstContact.NodeID = kademlia.NewRandomID()
+	thisNode.AddContactToBuckets(firstContact)
+	// test ping(), both with an ID and a host:port pair as an argument
+	log.Printf("Testing ping() with NodeID\n")
+    ping(firstContact.NodeID.AsString())
+    log.Printf("Testing ping() with host:port\n")
+    ping(firstPeerStr)
+    return 1
 }
 
 // check if the number of parameters is correct and global var running is equal to "status"
@@ -131,20 +133,19 @@ func is_cmd_valid(cmd []string, argc int, status bool) bool {
 }
 
 // execute the ping RPC given either a nodeID or a host:port pair
-// returns the contact info of the ping'ed node
-func ping(nodeToPing string) *kademlia.Contact {
+func ping(nodeToPing string) int {
 	// if the argument is not of the form host:port, assume that it is a nodeID and 
 	// look up the corresponding host/port pair
 	if len(strings.Split(nodeToPing, ":")) != 2 {
 		id, err := kademlia.FromString(nodeToPing)
 		if err != nil {
 			log.Printf("Error: Could not convert from string to nodeID (%e)\n",err)
-			return nil
+			return 0
 		}
 		contact := kademlia.LookupContact(thisNode,id)
 		if contact == nil {
 			log.Printf("Error: Could not find node with NodeID %s\n",nodeToPing)
-			return nil
+			return 0
 		}
 		hostPort := make([]string, 2)
 		hostPort[0] = contact.IPAddr
@@ -154,7 +155,7 @@ func ping(nodeToPing string) *kademlia.Contact {
 	}
     client, err := rpc.DialHTTP("tcp", nodeToPing)
     if err != nil {
-		log.Fatal("DialHTTP: ", err)
+	log.Fatal("DialHTTP: ", err)
     }
     ping := new(kademlia.Ping)
     ping.MsgID = kademlia.NewRandomID()
@@ -166,7 +167,7 @@ func ping(nodeToPing string) *kademlia.Contact {
 
     log.Printf("ping msgID: %s\n", ping.MsgID.AsString())
     log.Printf("pong msgID: %s\n", pong.MsgID.AsString())
-	return &pong.Sender
+	return 1
 }
 
 func store(hostAndPort string, key kademlia.ID, data []byte) int {
@@ -189,26 +190,16 @@ func store(hostAndPort string, key kademlia.ID, data []byte) int {
     }
 	return 1
 }
-func find_node(key kademlia.ID) int {
-	bucket,_ := thisNode.GetBucket(key)
-	nodes := bucket.FindNode(key)
-	fmt.Println(nodes)
+func find_node(key string) int {
 	return 0
 }
-
 func find_value(key string) int {
 	return 0
 }
-func get_local_value(key kademlia.ID) int {
-	if thisNode.Data[key] != nil {
-		log.Printf("OK: %v\n", thisNode.Data[key])
-    } else {
-    	log.Printf("ERR\n")
-    }
-    return 0
+func get_local_value(key string) int {
+	return 0
 }
 func get_node_id() int {
-	log.Printf("Node ID of this node: %s\n",thisNode.ThisContact.NodeID.AsString())
 	return 0
 }
 
@@ -270,7 +261,6 @@ func iterativeStore(key kademlia.ID, value []byte) int {
 Print a list of ≤ k closest nodes and print their IDs. You should collect
 the IDs in a slice and print that.
 */
-
 func iterativeFindNode(id kademlia.ID) kademlia.Bucket{ 
 	//Get 20 closest nodes from us.
 	req := new(kademlia.FindNodeRequest)
@@ -284,7 +274,6 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket{
     	}
 	//initialize array to hold all 20^2 contacts, which we'll sort later
 	big_arr := make([]kademlia.Contact, 400)
-	count := 0
 	for i :=0;i<len(k_closest);i++{
 		//find 20 closest for each node.
 		hostPort := make([]string, 2)
@@ -306,11 +295,13 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket{
 		if err != nil {
 			log.Fatal("Call: ", err)
     		}
-    		start := i * 20
-    		end := (i * 20) + 20
-		big_arr[start:end] = res.Nodes
+    		offset:= 20 * i
+		for j := 0; j<20; j++{
+		big_arr[j+offset] = res.Nodes[j]
+		}
 		
 	}
+	
 	return nil
 }
 
