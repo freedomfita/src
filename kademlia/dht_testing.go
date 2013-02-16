@@ -13,3 +13,18 @@ func (k *Kademlia) Add_Random_Nodes(){
 		}
 	}
 }
+
+func (k *Kademlia) Random_Nodes() []ID{
+	id_list := make([]ID, 50)
+	for i:=0;i<50;i++{
+		c:= new(Contact)
+		c.NodeID = NewRandomID()
+		id_list[i] = c.NodeID
+		c.IPAddr = "192.168.0.123"
+		c.Port - 7890
+		b_num := c.NodeID.Xor(k.ThisContact.NodeID).PrefixLen()
+		k.Next_Open_Spot(b_num)
+		k.K_Buckets[b_num][0] = c
+	}
+
+}
