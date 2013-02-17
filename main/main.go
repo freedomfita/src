@@ -335,57 +335,92 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 printf("%v %v\n", ID, value), where ID refers to the node that finally
 returned the value. If you do not find a value, print "ERR".
 */
-func iterativeFindValue(key /*kademlia.ID*/ string) *kademlia.Contact {
-	/*const alpha := 3
-	shortlist := make(kademlia.Bucket,3)
+func iterativeFindValue(key kademlia.ID) int {
+	const alpha = 3
+	
+	contacted_nodes := make(kademlia.Bucket,1600)
+	shortlist := make(kademlia.Bucket,20)
 	shortlist_size := 0
 	// The search begins by selecting alpha contacts from the non-empty k-bucket closest to the 
 	// bucket appropriate to the key being searched on.
 	_, bucket_num := thisNode.GetBucket(key.Xor(thisNode.ThisContact.NodeID))
-	for i := 0; i < 20; i++ {
-		if thisNode.K_Buckets[i] != nil {
-			shortlist[shortlist_size] = thisNode.K_Buckets[i]
+	for i := 0; i < 20 && shortlist_size < alpha; i++ {
+		if thisNode.K_Buckets[bucket_num][i] != nil {
+			shortlist[shortlist_size] = thisNode.K_Buckets[bucket_num][i]
+			shortlist_size++
 		}
-		if shortlist_size >= 
 	}
 	// If there are fewer than alpha contacts in that bucket, contacts are selected from other buckets.
-	for b_idx := 0; b < kademlia.NumBuckets; b++ {
+	for b_idx := 0; b < kademlia.NumBuckets && shortlist_size < alpha; b_idx++ {
 		if b_idx != bucket_num {
-			
+			for i := 0; i < 20 && shortlist_size < alpha; i++ {
+				if thisNode.K_Buckets[bucket_num][i] != nil {
+					shortlist[shortlist_size] = thisNode.K_Buckets[bucket_num][i]
+					shortlist_size++
+					if shortlist_size >= alpha {
+						break
+					}
+				}
+			}
 		}
 	}
-	// The contact closest to the target key, closestNode, is noted.
-	closestNode := kademlia.Sort_Contacts(shortlist)[0]
-// The node then sends parallel, asynchronous FIND_* RPCs to the alpha contacts in the 
-// shortlist. Each contact, if it is live, should normally return k triples. If any of the 
-// alpha contacts fails to reply, it is removed from the shortlist, at least temporarily.
-
-// The node then fills the shortlist with contacts from the replies received. These are those closest to the target. From the shortlist it selects another alpha contacts. The only condition for this selection is that they have not already been contacted. Once again a FIND_* RPC is sent to each in parallel.
-
-// Each such parallel search updates closestNode, the closest node seen so far.
-
-// The sequence of parallel searches is continued until either no node in the sets returned is closer than the closest node already seen or the initiating node has accumulated k probed and known to be active contacts.
-
-// If a cycle doesn't find a closer node, if closestNode is unchanged, then the 
-// initiating node sends a FIND_* RPC to each of the k closest nodes that it has not already queried.
-
-// At the end of this process, the node will have accumulated a set of k active contacts 
-// or (if the RPC was FIND_VALUE) may have found a data value. Either a set of triples or 
-// the value is returned to the caller.
-
-Kademlia uses a value of 3 for alpha, the degree of parallelism used. It appears that (see stutz06) this value is optimal.
-
-There are at least three approaches to managing parallelism. The first is to launch alpha probes and wait until all have succeeded or timed out before iterating. This is termed strict parallelism. The second is to limit the number of probes in flight to alpha; whenever a probe returns a new one is launched. We might call this bounded parallelism. A third is to iterate after what seems to be a reasonable delay (duration unspecified), so that the number of probes in flight is some low multiple of alpha. This is loose parallelism and the approach used by Kademlia.
-*/
-/*
-	req := new(kademlia.FindValueRequest)
-	req.MsgID = kademlia.NewRandomID()
-	req.Key = key
-	var res kademlia.FindValueResult
 	
 	for true {
+	// The node then sends parallel, asynchronous FIND_* RPCs to the alpha contacts in the 
+	// shortlist. Each contact, if it is live, should normally return k triples. If any of the 
+	// alpha contacts fails to reply, it is removed from the shortlist, at least temporarily.
 	
-	}
-	*/
-	return nil
+		// TODO: this isn't parallel yet.
+		new_shortlist := make(kademlia.Bucket,400)
+		for i := 0; i < len(shortlist); i++ {
+			kademlia.Next_Open_Spot(contacted_nodes)
+			contacted_nodes[0] = shortlist[i]
+			if shortlist[i] != nil {
+				hostPort := make([]string, 2)
+				hostPort[0] = shortlist[i].IPAddr
+				hostPort[1] = strconv.FormatUint(uint64(shortlist[i].Port),10)
+				hostPortStr := strings.Join(hostPort, ":")
+		
+				client, err := rpc.DialHTTP("tcp", hostPortStr)
+				if err != nil {
+					// TODO: this definitely shouldn't be a fatal error, it should just go on to the next node
+					log.Fatal("DialHTTP: ", err)
+				}
+				req := new(kademlia.FindValueRequest)
+				req.MsgID = kademlia.NewRandomID()
+				req.Key = key
+			
+				var res kademlia.FindValueResult
+				err = client.Call("Kademlia.FindValue", req, &res)
+				if err != nil {
+					log.Fatal("Call: ", err)
+    			}
+    			// if res.Err is nil, the node contains the value
+    			if res.Err == nil {
+    				log.Printf("%v %v\n", shortlist[i].IPAddr, res.Value)
+    				return 0
+    			} else {
+    				offset:= 20 * i
+					for j := 0; j<len(res.Nodes); j++{
+						new_shortlist[j+offset] = res.Nodes[j]
+					}
+    			}
+    		}
+    		shortlist_size = 0
+    	// assign contacts from new_shortlist to shortlist IF they haven't been contacted already
+    		for i := 0; i < len(new_shortlist) && shortlist_size < alpha; i++ {
+    		if new_shortlist[i] != nil {
+    			if shortlist.FindNode(new_shortlist[i].NodeID) == nil && contacted_nodes.FindNode(new_shortlist[i].NodeID) == nil {
+    				shortlist[shortlist_size] = new_shortlist[i]
+    				shortlist_size++
+    			}
+    		}
+    	}
+    		if shortlist_size == 0 {
+    			log.Printf("ERR\n")
+    			return 1
+    		}
+    	}
+    }
+    return 0
 }
