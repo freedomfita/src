@@ -113,11 +113,16 @@ func run(listenStr string, firstPeerStr string) int {
 	*/
 	// ping the first peer
 	firstPeerContact := ping(firstPeerStr)
+	fmt.Printf("Made it to before iterative\n")
 	// find and add the closest contacts to this node
 	closestContacts := iterativeFindNode(firstPeerContact.NodeID)
+	fmt.Printf("Made it through iterativeFindNode\n")
 	for i := 0; i < len(closestContacts); i++ {
+		fmt.Printf("finding closest contact %d\n",i)
 		thisNode.AddContactToBuckets(closestContacts[i])
 	}
+	id_list := thisNode.Local_Random_Nodes()
+	fmt.Printf("Made it through, have %d random nodes now in our buckets\n", len(id_list))
 	return 1
 
 }
@@ -286,8 +291,10 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 	req.NodeID = id
 	req.MsgID = kademlia.NewRandomID()
 	var k_res kademlia.FindNodeResult
+	fmt.Printf("In Iterative Find Node, before finding initial nodes closest to NodeID %v\n",id)
 	err := thisNode.FindNode(req,&k_res)
 	k_closest := k_res.Nodes
+	fmt.Printf("In Iterative Find Node, after finding initial nodes closest to NodeID\n")
 	if err != nil {
 		log.Fatal("Call: ", err)
     	}
@@ -320,6 +327,7 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 		}
 		
 	}
+	fmt.Printf("Finished IterativeFindNode and returning array of contacts\n")
 	return (kademlia.Sort_Contacts(big_arr))[:20]
 }
 
