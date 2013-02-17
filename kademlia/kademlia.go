@@ -106,13 +106,7 @@ func (k *Kademlia) Next_Open_Spot(b_num int) {
 */
 func (kadem *Kademlia) AddContactToBuckets(node *Contact) int {
 
-<<<<<<< HEAD
-    bucket, idx := kadem.GetBucket(node.NodeID)
-    //just to get rid of the warning, i think eventually we might change getbucket to return only idx
-    bucket[0]=bucket[0]
-=======
     _, idx := kadem.GetBucket(node.NodeID)
->>>>>>> implemented most of findValue
     //frees up first
     kadem.Next_Open_Spot(idx)
     kadem.K_Buckets[idx][0] = node
