@@ -78,10 +78,15 @@ func (k *Kademlia) FindNode(req *FindNodeRequest, res *FindNodeResult) error {
 
 func (k *Kademlia) Find_Closest(req_id ID, count int) []*Contact{
 	b_num := req_id.Xor(k.ThisContact.NodeID).PrefixLen() //get bucket number
+	b_num--
+	fmt.Printf("tried to access bucket %d\n",b_num)
 	b := k.K_Buckets[b_num] //get corresponding bucket
 	nodes := make([]*Contact, count)  //make node array
 	j := 0
 	for i:=0;i<len(b) && i<count;i++{ //we copy all contacts from closest bucket
+		if b[i] == nil{
+			continue
+		}
 		nodes[i] = b[i]
 		j++
 	}
@@ -90,6 +95,9 @@ func (k *Kademlia) Find_Closest(req_id ID, count int) []*Contact{
 		if b_num-i >= 0{ //copy bucket below
 			b = k.K_Buckets[b_num - i]
 			for c:=0; j<count && c<len(b);c++{
+				if b[c] == nil{
+					continue
+				}
 				nodes[j] = b[c]
 				j++
 			}
@@ -97,6 +105,9 @@ func (k *Kademlia) Find_Closest(req_id ID, count int) []*Contact{
 		if b_num+i < 160{ //copy bucket above
 			b = k.K_Buckets[b_num + i]
 			for c:=0; j<count && c<len(b);c++{
+				if b[c] == nil{
+					continue
+				}
 				nodes[j] = b[c]
 				j++
 			}
