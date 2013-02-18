@@ -56,6 +56,7 @@ func (k *Kademlia) Main_Testing(){
 
 	id_list := k.Local_Random_Nodes()
 	k.Test_Find_Nodes(id_list)
+	k.Print_KBuckets()
 
 }
 
@@ -82,3 +83,25 @@ func (k *Kademlia) Test_Find_Nodes(id_list []ID){
 	}
 
 }
+
+func (k *Kademlia) Print_KBuckets(){
+	for i:=0;i<15;i++{//len(k.K_Buckets);i++{
+		fmt.Printf("Printing Bucket #%v\n",i)
+		kb := k.K_Buckets[i]
+		for j:=0;j<len(kb);j++{
+			if kb[j] == nil{
+				fmt.Printf("Bucket #%v printed with %v elements\n",i,j)
+				break
+			} else {
+				fmt.Printf("B%v E%v :%v\n", i,j,kb[j])
+			}
+			
+		}
+	}
+}
+
+
+
+
+
+
