@@ -1,4 +1,5 @@
 package kademlia
+/*
 //only populates the kbuckets randomly, not by distance, more just to check things
 import (
 	"fmt"
@@ -131,7 +132,7 @@ func (k *Kademlia) Print_KBuckets(){
 			/*if kb[j] == nil{
 				fmt.Printf("Bucket #%v printed with %v elements\n",i,j)
 				break
-			} else {*/
+			} else {* /
 			fmt.Printf("B%v E%v :%v\n", i,j,kb[j])
 			//}
 			
@@ -161,6 +162,6 @@ func (k *Kademlia) Print_KBuckets_bare(){
 
 
 
-
+*/
 
 

@@ -2,12 +2,9 @@ package main
 
 import (
     "flag"
-    //"fmt"
+    "fmt"
     "log"
     "math/rand"
-    //"net"
-    //"net/http"
-    //"net/rpc"
     "time"
     "os"
     "bufio"
@@ -101,7 +98,7 @@ func main() {
 	    	k,_ := kademlia.FromString(arg_s[2])
 	    	kademlia.IterativeFindValue(k)
 	    } else {
-	    	log.Printf("Command/s unknown.")
+	    	fmt.Printf("Command/s unknown.")
 	    }
     }
     
@@ -110,7 +107,7 @@ func main() {
 // check if the number of parameters is correct and global var running is equal to "status"
 func is_cmd_valid(cmd []string, argc int) bool {
   if argc != len(cmd)-1 {
-		log.Printf("Error: Command '%s' must be invoked with %d arguments!\n",cmd[0],argc)
+		fmt.Printf("Error: Command '%s' must be invoked with %d arguments!\n",cmd[0],argc)
 		return false
 	}
 	return true

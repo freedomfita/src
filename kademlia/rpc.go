@@ -6,7 +6,6 @@ package kademlia
 import (
 	"errors"
   "fmt"
-  "log"
 )
 
 // PING
@@ -86,7 +85,7 @@ func (k *Kademlia) FindNode(req *FindNodeRequest, res *FindNodeResult) error {
     res.MsgID = CopyID(req.MsgID)
     res.Nodes = bucket_to_FoundNodeArr(k.find_closest(req.NodeID, 20)) //no idea if that should be 20 or not
     // print list of nodes
-    log.Printf("%v\n",res.Nodes)
+    fmt.Printf("%v\n",res.Nodes)
     return nil
 }
 
@@ -114,13 +113,13 @@ func (k *Kademlia) FindValue(req FindValueRequest, res *FindValueResult) error {
     		res.Value = copyData(val)
     		res.Nodes = nil
     		res.Err = nil
-        log.Printf("%v\n",res.Value)
+        fmt.Printf("%v\n",res.Value)
     		return nil
     	}
     }
     res.Value = nil
     res.Nodes = bucket_to_FoundNodeArr(k.find_closest(k.ThisContact.NodeID,20))
-    log.Printf("%v\n",res.Nodes)
+    fmt.Printf("%v\n",res.Nodes)
     res.Err = errors.New("Value not found")
     return nil
 }

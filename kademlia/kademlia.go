@@ -71,16 +71,16 @@ func Ping2(nodeToPing string) *Contact {
 	if len(strings.Split(nodeToPing, ":")) != 2 {
 		id, err := FromString(nodeToPing)
 		if err != nil {
-			log.Printf("Error: Could not convert from string to nodeID (%e)\n",err)
+			fmt.Printf("Error: Could not convert from string to nodeID (%e)\n",err)
 			return nil
 		}
 		contact := LookupContact(ThisNode,id)
 		if contact == nil {
-			log.Printf("Error: Could not find node with NodeID %s\n",nodeToPing)
+			fmt.Printf("Error: Could not find node with NodeID %s\n",nodeToPing)
 			return nil
 		}
 		nodeToPing = get_host_port(contact)
-		//log.Printf("Host/Port: %s\n",nodeToPing)
+		//fmt.Printf("Host/Port: %s\n",nodeToPing)
 	}
     client, err := rpc.DialHTTP("tcp", nodeToPing)
     if err != nil {
@@ -94,8 +94,8 @@ func Ping2(nodeToPing string) *Contact {
 	log.Fatal("Call: ", err)
     }
     client.Close()
-    log.Printf("ping msgID: %s\n", ping.MsgID.AsString())
-    log.Printf("pong msgID: %s\n", pong.MsgID.AsString())
+    fmt.Printf("ping msgID: %s\n", ping.MsgID.AsString())
+    fmt.Printf("pong msgID: %s\n", pong.MsgID.AsString())
   sender := new(Contact)
   sender.NodeID = pong.Sender.NodeID
   sender.IPAddr = pong.Sender.IPAddr
@@ -159,16 +159,16 @@ func bucket_Find_Node(b Bucket, key ID){
 
 func Get_local_value(key ID) int {
     if ThisNode.Data[key] != nil {
-		log.Printf("OK: %v\n", ThisNode.Data[key])
+		fmt.Printf("OK: %v\n", ThisNode.Data[key])
     } else {
-    	log.Printf("ERR\n")
+    	fmt.Printf("ERR\n")
     }
     return 0
 
 }
 func Whoami() int {
-	log.Printf("Node ID of this node: %s\n",ThisNode.ThisContact.NodeID.AsString())
-	//log.Printf("IP/Port: %v %v\n",ThisNode.ThisContact.IPAddr,ThisNode.ThisContact.Port)
+	fmt.Printf("Node ID of this node: %s\n",ThisNode.ThisContact.NodeID.AsString())
+	//fmt.Printf("IP/Port: %v %v\n",ThisNode.ThisContact.IPAddr,ThisNode.ThisContact.Port)
 	return 0
 }
 
@@ -189,10 +189,10 @@ func IterativeStore(key ID, value []byte) int {
 	//closestnode may want to be its own function that we call from FindNode, or at least
 	//that code should be in FindNode, since we need to populate res.Nodes with more than one bucket
 	for true {
-		//log.Printf("%s\n",hostPortStr)
+		//fmt.Printf("%s\n",hostPortStr)
 		client, err := rpc.DialHTTP("tcp", hostPortStr)
 		if err != nil {
-			//log.Printf("1\n")
+			//fmt.Printf("1\n")
 			log.Fatal("DialHTTP: ", err)
 		}
 		req := new(FindNodeRequest)
@@ -207,7 +207,7 @@ func IterativeStore(key ID, value []byte) int {
     		}
     client.Close()
     		// obviously we need to do something with the array here, not just take the first element
-    		//log.Printf("Node 0: %v\n",res.Nodes[0])
+    		//fmt.Printf("Node 0: %v\n",res.Nodes[0])
     		nextClosestNode, dist := res.Nodes[0], key.Xor(res.Nodes[0].NodeID)
     		for i:= 0; i < len(res.Nodes); i++ {
     			if res.Nodes[i].Port != 0 {
@@ -255,7 +255,7 @@ func IterativeStore(key ID, value []byte) int {
       }
     }
   }
-	log.Printf("%v\n",closestNode.NodeID)
+	fmt.Printf("%v\n",closestNode.NodeID)
 	return 1
 }
 
@@ -288,7 +288,7 @@ func IterativeFindNode(id ID) Bucket {
 			// do nothing
 		} else if k_closest[i].Port != 0 {
 			hostPortStr := get_host_port(k_closest[i])
-			//log.Printf("Host/Port: %s\n",hostPortStr)
+			//fmt.Printf("Host/Port: %s\n",hostPortStr)
 			client, err := rpc.DialHTTP("tcp", hostPortStr)
 			if err != nil {
 				log.Fatal("DialHTTP: ", err)
@@ -300,7 +300,7 @@ func IterativeFindNode(id ID) Bucket {
 			var res FindNodeResult
 			//if FindNode works, all of the closest nodes should be in res.
 			err = client.Call("Kademlia.FindNode", req, &res)
-			//log.Printf("NODES: %v\n",res.Nodes)
+			//fmt.Printf("NODES: %v\n",res.Nodes)
 			if err != nil {
 				log.Fatal("Call: ", err)
     			}
@@ -327,7 +327,7 @@ func IterativeFindValue(key ID) int {
 
 	// check if this node has the value
 	if ThisNode.Data[key] != nil {
-		log.Printf("%v %v\n", ThisNode.ThisContact.NodeID, ThisNode.Data[key])
+		fmt.Printf("%v %v\n", ThisNode.ThisContact.NodeID, ThisNode.Data[key])
 		return 0
 	}
   // if this node doesn't have the value, search among the known nodes
@@ -389,8 +389,8 @@ func IterativeFindValue(key ID) int {
           client.Close()
     				// if res.Err is nil, the node contains the value
     				if res.Err == nil {
-              				//log.Printf("OK\n")
-    					log.Printf("%v %v\n", shortlist[i].NodeID, res.Value)
+              				//fmt.Printf("OK\n")
+    					fmt.Printf("%v %v\n", shortlist[i].NodeID, res.Value)
     					return 0
     				} else {
     					offset:= 20 * i
@@ -412,7 +412,7 @@ func IterativeFindValue(key ID) int {
     		}
     	}
     		if shortlist_size == 0 {
-    			log.Printf("ERR\n")
+    			fmt.Printf("ERR\n")
     			return 1
     		}
     	}
