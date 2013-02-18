@@ -58,7 +58,7 @@ func (bucket Bucket) FindNode(id ID) *Contact {
 
 func (kadem *Kademlia) GetBucket(dist ID) (Bucket,int) {
     // if PrefixLen == x, then 2^(160-(x+1)) <= ID < 2^(160-x), so the bucket # is (159-x)
-    bucketNum := NumBuckets - (dist.PrefixLen() + 1)
+    bucketNum := dist.PrefixLen()
     return kadem.K_Buckets[bucketNum], bucketNum
 }
 
