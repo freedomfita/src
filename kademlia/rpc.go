@@ -63,7 +63,7 @@ type FoundNode struct {
 type FindNodeResult struct {
     MsgID ID
     //Nodes []FoundNode
-    Nodes []*Contact
+    Nodes []FoundNode
     Err error
 }
 
@@ -71,7 +71,8 @@ func (k *Kademlia) FindNode(req *FindNodeRequest, res *FindNodeResult) error {
     // TODO: Implement.
     //pseudo
     //populate res.Nodes (array of FoundNodes)
-    res.Nodes = k.Find_Closest(req.NodeID, 20) //no idea if that should be 20 or not
+    res.MsgID = CopyID(req.MsgID)
+    res.Nodes = Bucket_to_FoundNode(k.Find_Closest(req.NodeID, 20)) //no idea if that should be 20 or not
     //May need to change this, haven't tested it, but we could have to add each entry to
     //res.Nodes in a for loop after returning the array of Contacts, but we'll see
     return nil
@@ -146,7 +147,7 @@ type FindValueRequest struct {
 type FindValueResult struct {
     MsgID ID
     Value []byte
-    Nodes []*Contact
+    Nodes []FoundNode
     Err error
 }
 
@@ -163,8 +164,32 @@ func (k *Kademlia) FindValue(req FindValueRequest, res *FindValueResult) error {
     	}
     }
     res.Value = nil
-    res.Nodes = k.Find_Closest(k.ThisContact.NodeID,20)
+    res.Nodes = Bucket_to_FoundNode(k.Find_Closest(k.ThisContact.NodeID,20))
     res.Err = errors.New("Value not found")
     return nil
 }
 
+func Bucket_to_FoundNode(bucket Bucket) []FoundNode {
+	b := make([]FoundNode,len(bucket))
+	j := 0
+	for i := 0; i < len(bucket); i++ {
+		if bucket[i] != nil {
+			b[j].IPAddr = bucket[i].IPAddr
+			b[j].NodeID = bucket[i].NodeID
+			b[j].Port = bucket[i].Port
+			j++
+		}
+	}
+	return b
+}
+
+func FoundNode_to_Bucket(foundNodes []FoundNode) Bucket {
+	b := make(Bucket,len(foundNodes))
+	for i := 0; i < len(foundNodes); i++ {
+			b[i] = new(Contact)
+			b[i].IPAddr = foundNodes[i].IPAddr
+			b[i].NodeID = foundNodes[i].NodeID
+			b[i].Port = foundNodes[i].Port
+	}
+	return b
+}

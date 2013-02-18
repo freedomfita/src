@@ -259,7 +259,7 @@ func iterativeStore(key kademlia.ID, value []byte) int {
     		curDistance := key.Xor(res.Nodes[0].NodeID)
     	
     		if !curDistance.Less(prevDistance) {
-    			closestNode = res.Nodes[0]
+    			closestNode = kademlia.FoundNode_to_Bucket(res.Nodes)[0]
     			break
     		}
     		hostPortStr = get_host_port(closestNode)
@@ -292,7 +292,7 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 	big_arr := make(kademlia.Bucket, 400)
 	for i :=0;i<len(k_closest);i++{
 		//find 20 closest for each node.
-		hostPortStr := get_host_port(k_closest[i])
+		hostPortStr := get_host_port(kademlia.FoundNode_to_Bucket(k_closest)[i])
 		
 		client, err := rpc.DialHTTP("tcp", hostPortStr)
 		if err != nil {
@@ -309,8 +309,9 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 			log.Fatal("Call: ", err)
     		}
     		offset:= 20 * i
-		for j := 0; j<len(res.Nodes); j++{
-			big_arr[j+offset] = res.Nodes[j]
+    		resBucket := kademlia.FoundNode_to_Bucket(res.Nodes)
+		for j := 0; j<len(resBucket); j++{
+			big_arr[j+offset] = resBucket[j]
 		}
 		
 	}
@@ -387,8 +388,9 @@ func iterativeFindValue(key kademlia.ID) int {
     				return 0
     			} else {
     				offset:= 20 * i
-					for j := 0; j<len(res.Nodes); j++{
-						new_shortlist[j+offset] = res.Nodes[j]
+    				resBucket := kademlia.FoundNode_to_Bucket(res.Nodes)
+					for j := 0; j<len(resBucket); j++{
+						new_shortlist[j+offset] = resBucket[j]
 					}
     			}
     		}
