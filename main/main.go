@@ -160,10 +160,7 @@ func ping(nodeToPing string) *kademlia.Contact {
 			log.Printf("Error: Could not find node with NodeID %s\n",nodeToPing)
 			return nil
 		}
-		hostPort := make([]string, 2)
-		hostPort[0] = contact.IPAddr
-		hostPort[1] = strconv.FormatUint(uint64(contact.Port),10)
-		nodeToPing = strings.Join(hostPort, ":")
+		nodeToPing = get_host_port(contact)
 		//log.Printf("Host/Port: %s\n",nodeToPing)
 	}
     client, err := rpc.DialHTTP("tcp", nodeToPing)
@@ -238,10 +235,7 @@ func iterativeStore(key kademlia.ID, value []byte) int {
 	//var closestNode kademlia.FoundNode
 	var closestNode *kademlia.Contact
 	
-	hostPort := make([]string, 2)
-	hostPort[0] = thisNode.ThisContact.IPAddr
-	hostPort[1] = strconv.FormatUint(uint64(thisNode.ThisContact.Port),10)
-	hostPortStr := strings.Join(hostPort, ":")
+	hostPortStr := get_host_port(thisNode.ThisContact)
 	
 	//closestnode may want to be its own function that we call from FindNode, or at least
 	//that code should be in FindNode, since we need to populate res.Nodes with more than one bucket
@@ -268,14 +262,10 @@ func iterativeStore(key kademlia.ID, value []byte) int {
     			closestNode = res.Nodes[0]
     			break
     		}
-    		hostPort[0] = closestNode.IPAddr
-			hostPort[1] = strconv.FormatUint(uint64(closestNode.Port),10)
-			hostPortStr = strings.Join(hostPort, ":")
+    		hostPortStr = get_host_port(closestNode)
 		}
 	
-	hostPort[0] = closestNode.IPAddr
-	hostPort[1] = strconv.FormatUint(uint64(closestNode.Port),10)
-	hostPortStr = strings.Join(hostPort, ":")
+	hostPortStr = get_host_port(closestNode)
 	store(hostPortStr, key, value)
 	log.Printf("NodeID receiving STORE operation: %d\n",closestNode.NodeID)
 	return 1
@@ -302,10 +292,7 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 	big_arr := make(kademlia.Bucket, 400)
 	for i :=0;i<len(k_closest);i++{
 		//find 20 closest for each node.
-		hostPort := make([]string, 2)
-		hostPort[0] = k_closest[i].IPAddr
-		hostPort[1] = strconv.FormatUint(uint64(k_closest[i].Port),10)
-		hostPortStr := strings.Join(hostPort, ":")
+		hostPortStr := get_host_port(k_closest[i])
 		
 		client, err := rpc.DialHTTP("tcp", hostPortStr)
 		if err != nil {
@@ -328,6 +315,8 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 		
 	}
 	fmt.Printf("Finished IterativeFindNode and returning array of contacts\n")
+	// print slice of <= k closest NodeIDs
+	fmt.Printf("%v\n",kademlia.Sort_Contacts(big_arr)[:20])
 	return (kademlia.Sort_Contacts(big_arr))[:20]
 }
 
@@ -351,7 +340,7 @@ func iterativeFindValue(key kademlia.ID) int {
 		}
 	}
 	// If there are fewer than alpha contacts in that bucket, contacts are selected from other buckets.
-	for b_idx := 0; b < kademlia.NumBuckets && shortlist_size < alpha; b_idx++ {
+	for b_idx := 0; b_idx < kademlia.NumBuckets && shortlist_size < alpha; b_idx++ {
 		if b_idx != bucket_num {
 			for i := 0; i < 20 && shortlist_size < alpha; i++ {
 				if thisNode.K_Buckets[bucket_num][i] != nil {
@@ -376,10 +365,7 @@ func iterativeFindValue(key kademlia.ID) int {
 			kademlia.Next_Open_Spot(contacted_nodes)
 			contacted_nodes[0] = shortlist[i]
 			if shortlist[i] != nil {
-				hostPort := make([]string, 2)
-				hostPort[0] = shortlist[i].IPAddr
-				hostPort[1] = strconv.FormatUint(uint64(shortlist[i].Port),10)
-				hostPortStr := strings.Join(hostPort, ":")
+				hostPortStr := get_host_port(contacted_nodes[i])
 		
 				client, err := rpc.DialHTTP("tcp", hostPortStr)
 				if err != nil {
@@ -423,4 +409,11 @@ func iterativeFindValue(key kademlia.ID) int {
     	}
     }
     return 0
+}
+
+func get_host_port(c *kademlia.Contact) string {
+	hostPort := make([]string,2)
+	hostPort[0] = c.IPAddr
+	hostPort[1] = strconv.FormatUint(uint64(c.Port),10)
+	return strings.Join(hostPort, ":")
 }
