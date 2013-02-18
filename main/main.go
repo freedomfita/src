@@ -283,7 +283,7 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 	var k_res kademlia.FindNodeResult
 	fmt.Printf("In Iterative Find Node, before finding initial nodes closest to NodeID %v\n",id)
 	err := thisNode.FindNode(req,&k_res)
-	k_closest := k_res.Nodes
+	k_closest := kademlia.FoundNode_to_Bucket(k_res.Nodes)
 	fmt.Printf("In Iterative Find Node, after finding initial nodes closest to NodeID\n")
 	if err != nil {
 		log.Fatal("Call: ", err)
@@ -292,18 +292,10 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 	big_arr := make(kademlia.Bucket, 400)
 	for i :=0;i<len(k_closest);i++{
 		//find 20 closest for each node.
-<<<<<<< HEAD
-<<<<<<< HEAD
 		if k_closest[i] == nil{
 			continue
 		}
-		hostPortStr := get_host_port(kademlia.FoundNode_to_Bucket(k_closest)[i])
-=======
 		hostPortStr := get_host_port(k_closest[i])
->>>>>>> made some changes to command line parsing in main function
-=======
-		hostPortStr := get_host_port(kademlia.FoundNode_to_Bucket(k_closest)[i])
->>>>>>> Revert "made some changes to command line parsing in main function"
 		
 		client, err := rpc.DialHTTP("tcp", hostPortStr)
 		if err != nil {
