@@ -5,8 +5,6 @@ package kademlia
 
 import (
 	"errors"
-	"fmt"
-	"sort"
 )
 
 // PING
@@ -81,61 +79,10 @@ func (k *Kademlia) FindNode(req *FindNodeRequest, res *FindNodeResult) error {
     //pseudo
     //populate res.Nodes (array of FoundNodes)
     res.MsgID = CopyID(req.MsgID)
-    res.Nodes = Bucket_to_FoundNode(k.Find_Closest(req.NodeID, 20)) //no idea if that should be 20 or not
+    res.Nodes = bucket_to_FoundNodeArr(k.find_closest(req.NodeID, 20)) //no idea if that should be 20 or not
     //May need to change this, haven't tested it, but we could have to add each entry to
     //res.Nodes in a for loop after returning the array of Contacts, but we'll see
     return nil
-}
-
-func (k *Kademlia) Find_Closest(req_id ID, count int) []*Contact{
-	//fmt.Printf("Prepare to Xor:\n|%v|\n|%v|\n", req_id, k.ThisContact.NodeID)
-	b_num := req_id.Xor(k.ThisContact.NodeID).PrefixLen() //get bucket number
-	if b_num == 160{ // if req_id == k.NodeID, b_num will be 160. In this case we just exit
-		return nil
-	}
-	fmt.Printf("tried to access bucket %d\n",b_num)
-	b := k.K_Buckets[b_num] //get corresponding bucket
-	nodes := make([]*Contact, count)  //make node array
-	j := 0
-	for i:=0;i<len(b) && i<count;i++{ //we copy all contacts from closest bucket
-		if b[i] == nil{
-			continue
-		}
-		nodes[i] = b[i]
-		j++
-	}
-	//then if there is still room, we add neighboring buckets' contacts
-	for i:=1; (b_num-i >= 0 || b_num+i < 160) && j<count; i++{
-		if b_num-i >= 0{ //copy bucket below
-			b = k.K_Buckets[b_num - i]
-			for c:=0; j<count && c<len(b);c++{
-				if b[c] == nil{
-					continue
-				}
-				nodes[j] = b[c]
-				j++
-			}
-		}
-		if b_num+i < 160{ //copy bucket above
-			b = k.K_Buckets[b_num + i]
-			for c:=0; j<count && c<len(b);c++{
-				if b[c] == nil{
-					continue
-				}
-				nodes[j] = b[c]
-				j++
-			}
-		}
-	}
-	//Once full we need to sort. I'm being lazy and saving this for later
-	nodes = Sort_Contacts(nodes)
-	return nodes
-}
-
-// sort function for buckets
-func Sort_Contacts(arr Bucket) Bucket {
-	sort.Sort(BucketSort_ByNodeID{arr})
-	return arr//sorted_arr
 }
 
 // FIND_VALUE
@@ -159,46 +106,14 @@ func (k *Kademlia) FindValue(req FindValueRequest, res *FindValueResult) error {
     	if key.Equals(req.Key) {
     		res.MsgID = CopyID(req.MsgID)
     		// can we just do this here, or need to Copy(val) ?
-    		res.Value = CopyData(val)
+    		res.Value = copyData(val)
     		res.Nodes = nil
     		res.Err = nil
     		return nil
     	}
     }
     res.Value = nil
-    res.Nodes = Bucket_to_FoundNode(k.Find_Closest(k.ThisContact.NodeID,20))
+    res.Nodes = bucket_to_FoundNodeArr(k.find_closest(k.ThisContact.NodeID,20))
     res.Err = errors.New("Value not found")
     return nil
-}
-
-func Bucket_to_FoundNode(bucket Bucket) []FoundNode {
-	b := make([]FoundNode,len(bucket))
-	j := 0
-	for i := 0; i < len(bucket); i++ {
-		if bucket[i] != nil {
-			b[j].IPAddr = bucket[i].IPAddr
-			b[j].NodeID = bucket[i].NodeID
-			b[j].Port = bucket[i].Port
-			j++
-		}
-	}
-	return b
-}
-
-func FoundNode_to_Bucket(foundNodes []FoundNode) Bucket {
-	b := make(Bucket,len(foundNodes))
-	for i := 0; i < len(foundNodes); i++ {
-			b[i] = new(Contact)
-			b[i].IPAddr = foundNodes[i].IPAddr
-			b[i].NodeID = foundNodes[i].NodeID
-			b[i].Port = foundNodes[i].Port
-	}
-	return b
-}
-
-func CopyData(data []byte) (ret []byte) {
-    for i := 0; i < len(data); i++ {
-        ret[i] = data[i]
-    }
-    return
 }

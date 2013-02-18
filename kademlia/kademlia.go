@@ -8,7 +8,6 @@ import (
   "log"
   "net/rpc"
   "strings"
-  "strconv"
 )
 
 const NumBuckets = 160
@@ -58,119 +57,6 @@ func (bucket Bucket) FindNode(id ID) *Contact {
         }
     }
     return nil
-}
-
-func (kadem *Kademlia) GetBucket(dist ID) (Bucket,int) {
-    // if PrefixLen == x, then 2^(160-(x+1)) <= ID < 2^(160-x), so the bucket # is (159-x)
-    bucketNum := NumBuckets - (dist.PrefixLen() + 1)
-    return kadem.K_Buckets[bucketNum], bucketNum
-}
-
-func Next_Open_Spot(b Bucket) {
-	open_spot := -1
-	b_len := len(b)
-	if b[0] ==nil{
-		return
-	}
-	for i:=1;i<b_len;i++{
-		if b[i]==nil{
-			open_spot=i
-			break
-		}
-	}
-	//if open_spot==-1, list is full
-	//so pop last entry(which is really the first) and shift list one spot to the right
-	if open_spot==-1{
-		b[b_len-1] = nil //make last entry nil
-		//shift list
-		for i:=b_len-2;i>0;i--{
-			b[i+1] = b[i]
-		}
-		b[0] = nil
-		
-	}
-	//else, shift list over one, with last entry at open_spot-1
-	//shift 0 to openspot -1 to 1 to openspot
-	for i:=open_spot-1;i>0;i--{
-		b[i+1] = b[i]
-	}
-	b[0]=nil
-	return
-}
-
-func (k *Kademlia) Next_Open_Spot(b_num int) {
-	b := k.K_Buckets[b_num]
-	open_spot := -1
-	b_len := len(b)
-	fmt.Printf("Looking for next open spot in bucket %v\n", b_num)
-	if b[0] ==nil{
-		return
-	}
-	for i:=1;i<b_len;i++{
-		if b[i]==nil{
-			open_spot=i
-			fmt.Printf("Open spot at %v\n",i)
-			break
-		}
-	}
-	//if open_spot==-1, list is full
-	//so pop last entry(which is really the first) and shift list one spot to the right
-	if open_spot==-1{
-		fmt.Printf("Popping %v\n", b[b_len-1])
-		b[b_len-1] = nil //make last entry nil
-		//shift list
-		for i:=b_len-2;i>0;i--{
-			b[i+1] = b[i]
-		}
-		b[0] = nil
-		
-	} else{
-	//else, shift list over one, with last entry at open_spot-1
-	//shift 0 to openspot -1 to 1 to openspot
-		for i:=open_spot;i>0;i--{
-			fmt.Printf("moving %v to %v\n",i-1,i)
-			fmt.Printf("Values: %v\n %v\n",b[i],b[i-1])
-			b[i] = b[i-1]
-		}
-		b[0]=nil
-		return
-	}
-}
-/*
-[a][ ][ ]
-[b][a][ ]
-[c][b][a]
-[c][b][ ]
-[ ][c][b]
- ^
-[d][c][b]
-
-*/
-func (kadem *Kademlia) AddContactToBuckets(node *Contact) int {
-
-    _, idx := kadem.GetBucket(node.NodeID)
-    //frees up first
-    kadem.Next_Open_Spot(idx)
-    kadem.K_Buckets[idx][0] = node
-    
-    return 0
-}
-
-// interface to allow for sorting within buckets
-func (s Bucket) Len() int      { return len(s) }
-func (s Bucket) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-
-// BucketSort_ByNodeID implements sort.Interface by providing Less and using the Len and
-// Swap methods of the embedded Organs value.
-type BucketSort_ByNodeID struct{ Bucket }
-
-func (s BucketSort_ByNodeID) Less(i, j int) bool { 
-if s.Bucket[i] == nil {
-	return false //nil's go at the end
-} else if s.Bucket[j] == nil {
-	return true
-}
-	return s.Bucket[i].NodeID.Less(s.Bucket[j].NodeID) 
 }
 
 // execute the ping RPC given either a nodeID or a host:port pair
@@ -337,7 +223,7 @@ func IterativeFindNode(id ID) Bucket {
 	fmt.Printf("In Iterative Find Node, before finding initial nodes closest to NodeID %v\n",id)
 	err := ThisNode.FindNode(req,&k_res)
 	
-	k_closest := FoundNode_to_Bucket(k_res.Nodes)
+	k_closest := foundNodeArr_to_Bucket(k_res.Nodes)
 	fmt.Printf("In Iterative Find Node, after finding initial nodes closest to NodeID\n")
 	if err != nil {
 		log.Fatal("Call: ", err)
@@ -369,7 +255,8 @@ func IterativeFindNode(id ID) Bucket {
 				log.Fatal("Call: ", err)
     			}
     			offset:= 20 * i
-    			resBucket := FoundNode_to_Bucket(res.Nodes)
+    			// convert to Bucket type so we can call funcs on it
+    			resBucket := foundNodeArr_to_Bucket(res.Nodes)
 			for j := 0; j<len(resBucket); j++{
 				big_arr[j+offset] = resBucket[j]
 			}
@@ -379,7 +266,7 @@ func IterativeFindNode(id ID) Bucket {
 	fmt.Printf("Finished IterativeFindNode and returning array of contacts\n")
 	// print slice of <= k closest NodeIDs
 	//fmt.Printf("%v\n",kademlia.Sort_Contacts(big_arr)[:20])
-	return (Sort_Contacts(big_arr))
+	return (sort_contacts(big_arr))
 }
 
 /*
@@ -457,7 +344,7 @@ func IterativeFindValue(key ID) int {
     					return 0
     				} else {
     					offset:= 20 * i
-    					resBucket := FoundNode_to_Bucket(res.Nodes)
+    					resBucket := foundNodeArr_to_Bucket(res.Nodes)
 						for j := 0; j<len(resBucket); j++{
 							new_shortlist[j+offset] = resBucket[j]
 						}
@@ -483,13 +370,47 @@ func IterativeFindValue(key ID) int {
     return 0
 }
 
-func get_host_port(c *Contact) string {
-	if c == nil {
-		return ""
+func (k *Kademlia) find_closest(req_id ID, count int) []*Contact{
+	//fmt.Printf("Prepare to Xor:\n|%v|\n|%v|\n", req_id, k.ThisContact.NodeID)
+	b_num := req_id.Xor(k.ThisContact.NodeID).PrefixLen() //get bucket number
+	if b_num == 160{ // if req_id == k.NodeID, b_num will be 160. In this case we just exit
+		return nil
 	}
-	hostPort := make([]string,2)
-	hostPort[0] = c.IPAddr
-	hostPort[1] = strconv.FormatUint(uint64(c.Port),10)
-	hostPortStr := strings.Join(hostPort, ":")
-	return hostPortStr
+	fmt.Printf("tried to access bucket %d\n",b_num)
+	b := k.K_Buckets[b_num] //get corresponding bucket
+	nodes := make([]*Contact, count)  //make node array
+	j := 0
+	for i:=0;i<len(b) && i<count;i++{ //we copy all contacts from closest bucket
+		if b[i] == nil{
+			continue
+		}
+		nodes[i] = b[i]
+		j++
+	}
+	//then if there is still room, we add neighboring buckets' contacts
+	for i:=1; (b_num-i >= 0 || b_num+i < 160) && j<count; i++{
+		if b_num-i >= 0{ //copy bucket below
+			b = k.K_Buckets[b_num - i]
+			for c:=0; j<count && c<len(b);c++{
+				if b[c] == nil{
+					continue
+				}
+				nodes[j] = b[c]
+				j++
+			}
+		}
+		if b_num+i < 160{ //copy bucket above
+			b = k.K_Buckets[b_num + i]
+			for c:=0; j<count && c<len(b);c++{
+				if b[c] == nil{
+					continue
+				}
+				nodes[j] = b[c]
+				j++
+			}
+		}
+	}
+	//Once full we need to sort. I'm being lazy and saving this for later
+	nodes = sort_contacts(nodes)
+	return nodes
 }
