@@ -14,7 +14,7 @@ func (k *Kademlia) Random_Nodes() []ID{
 		c:= new(Contact)
 		c.NodeID = NewRandomID()
 		id_list[i] = c.NodeID
-		c.IPAddr = "192.168.0.123"
+		c.IPAddr = "localhost"
 		c.Port = 7890
 		b_num := c.NodeID.Xor(k.ThisContact.NodeID).PrefixLen()
 		k.next_open_spot(b_num)
@@ -43,15 +43,15 @@ func (k *Kademlia) Local_Random_Nodes() []ID{
 //takes in id_list from Random_Nodes and runs test
 func Main_Testing(k *Kademlia){
 	
-	//id_list := k.Local_Random_Nodes()
+	id_list := k.Local_Random_Nodes()
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	//Test_Iterative_Find_Node(id_list)
+	Test_Iterative_Find_Node(id_list)
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	//k.Test_Find_Nodes(id_list)
+	k.Test_Find_Nodes(id_list)
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	//k.Print_KBuckets()
+	k.Print_KBuckets()
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	//k.Print_KBuckets_bare()
+	k.Print_KBuckets_bare()
 	fmt.Printf("*****************\n*****************\n*****************\n")
 	Test_Iterative_Store()
 	fmt.Printf("*****************\n*****************\n*****************\n")

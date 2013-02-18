@@ -93,7 +93,7 @@ func Ping2(nodeToPing string) *Contact {
     if err != nil {
 	log.Fatal("Call: ", err)
     }
-
+    client.Close()
     log.Printf("ping msgID: %s\n", ping.MsgID.AsString())
     log.Printf("pong msgID: %s\n", pong.MsgID.AsString())
     //fmt.Printf("%s\n",pong.Sender.NodeID.AsString())
@@ -130,9 +130,10 @@ func store(hostAndPort string, key ID, data []byte) int {
     	req.Value = data
     	
     	var res StoreResult
-		err = client.Call("Kademlia.Store", req, &res)
+      err = client.Call("Kademlia.Store", req, &res)
+      client.Close()
     	if err != nil {
-			log.Fatal("Call: ", err)
+        log.Fatal("Call: ", err)
     	}
     /* } else {
     	fmt.Printf("Node already had value.\n")
@@ -193,6 +194,7 @@ func IterativeStore(key ID, value []byte) int {
     		if err != nil {
 			log.Fatal("Call: ", err)
     		}
+    client.Close()
     		// obviously we need to do something with the array here, not just take the first element
     		log.Printf("Node 0: %v\n",res.Nodes[0])
     		nextClosestNode, dist := res.Nodes[0], key.Xor(res.Nodes[0].NodeID)
@@ -208,6 +210,7 @@ func IterativeStore(key ID, value []byte) int {
     			break
     		} else {
     			closestNode = nextClosestNode.ToContactPtr()
+          prevDistance = curDistance
     		}
     		hostPortStr = get_host_port(closestNode)
 		}
@@ -261,6 +264,7 @@ func IterativeFindNode(id ID) Bucket {
 			if err != nil {
 				log.Fatal("Call: ", err)
     			}
+      client.Close()
     			offset:= 20 * i
     			// convert to Bucket type so we can call funcs on it
     			resBucket := foundNodeArr_to_Bucket(res.Nodes)
@@ -344,7 +348,8 @@ func IterativeFindValue(key ID) int {
 					err = client.Call("Kademlia.FindValue", req, &res)
 					if err != nil {
 						log.Fatal("Call: ", err)
-    				}	
+    				}
+          client.Close()
     				// if res.Err is nil, the node contains the value
     				if res.Err == nil {
     					log.Printf("%v %v\n", shortlist[i].IPAddr, res.Value)
