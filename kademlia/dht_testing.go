@@ -10,7 +10,7 @@ import (
 const num_test_nodes = 50
 
 //use MoritzIP for these nodes
-func (k *Kademlia) Random_Nodes() []ID{
+func (k *Kademlia) random_nodes() []ID{
 	id_list := make([]ID, num_test_nodes)
 	for i:=0;i<num_test_nodes;i++{
 		c:= new(Contact)
@@ -19,14 +19,14 @@ func (k *Kademlia) Random_Nodes() []ID{
 		c.IPAddr = "192.168.0.123"
 		c.Port = 7890
 		b_num := c.NodeID.Xor(k.ThisContact.NodeID).PrefixLen()
-		k.Next_Open_Spot(b_num)
+		k.next_open_spot(b_num)
 		k.K_Buckets[b_num][0] = c
 	}
 	return id_list
 
 }
 //use localhost for these nodes
-func (k *Kademlia) Local_Random_Nodes() []ID{
+func (k *Kademlia) local_random_nodes() []ID{
 	id_list := make([]ID, num_test_nodes)
 	for i:=0;i<num_test_nodes;i++{
 		c:= new(Contact)
@@ -35,29 +35,29 @@ func (k *Kademlia) Local_Random_Nodes() []ID{
 		c.IPAddr = "localhost"
 		c.Port = 7890
 		b_num := c.NodeID.Xor(k.ThisContact.NodeID).PrefixLen()
-		k.Next_Open_Spot(b_num)
+		k.next_open_spot(b_num)
 		k.K_Buckets[b_num][0] = c
 	}
 	return id_list
 
 }
 
-//takes in id_list from Random_Nodes and runs test
+//takes in id_list from random_nodes and runs test
 func (k *Kademlia) Main_Testing(){
 
-	//id_list := k.Local_Random_Nodes()
+	//id_list := k.local_random_nodes()
 	fmt.Printf("*****************\n*****************\n*****************\n")
 	//Test_Iterative_Find_Node(id_list)
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	//k.Test_Find_Nodes(id_list)
+	//k.test_find_nodes(id_list)
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	//k.Print_KBuckets()
+	//k.print_kBuckets()
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	//k.Print_KBuckets_bare()
+	//k.print_kBuckets_bare()
 }
 
 //Tests find Node
-func (k *Kademlia) Test_Find_Nodes(id_list []ID){
+func (k *Kademlia) test_find_nodes(id_list []ID){
 
 	for i:=0;i<len(id_list);i++{
 		req := new(FindNodeRequest)
@@ -93,7 +93,7 @@ func Test_Iterative_Find_Node(id_list []ID){
 	}
 }
 
-func (k *Kademlia) Print_KBuckets(){
+func (k *Kademlia) print_kBuckets(){
 	for i:=0;i<15;i++{//len(k.K_Buckets);i++{
 		fmt.Printf("Printing Bucket #%v\n",i)
 		kb := k.K_Buckets[i]
@@ -109,7 +109,7 @@ func (k *Kademlia) Print_KBuckets(){
 	}
 }
 
-func (k *Kademlia) Print_KBuckets_bare(){
+func (k *Kademlia) print_kBuckets_bare(){
 	for i:=0;i<160;i++{
 		count:= -1
 		kb:= k.K_Buckets[i]

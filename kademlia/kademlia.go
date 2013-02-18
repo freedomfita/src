@@ -6,8 +6,11 @@ import (
   //"net"
   "fmt"
   "log"
+  "net"
+  "net/http"
   "net/rpc"
   "strings"
+  "strconv"
 )
 
 const NumBuckets = 160
@@ -44,7 +47,7 @@ func NewKademlia() *Kademlia {
 
 func LookupContact(node *Kademlia, lookupID ID) *Contact {
     dist := lookupID.Xor(node.ThisContact.NodeID)
-    bucket,_ := node.GetBucket(dist)
+    bucket,_ := node.getBucket(dist)
     return bucket.FindNode(lookupID)
 }
 
@@ -133,7 +136,7 @@ func store(hostAndPort string, key ID, data []byte) int {
 	return 1
 }
 func Find_node(key ID) int {
-	bucket,_ := ThisNode.GetBucket(key)
+	bucket,_ := ThisNode.getBucket(key)
 	nodes := bucket.FindNode(key)
 	fmt.Println(nodes)
 
@@ -288,7 +291,7 @@ func IterativeFindValue(key ID) int {
 	shortlist_size := 0
 	// The search begins by selecting alpha contacts from the non-empty k-bucket closest to the 
 	// bucket appropriate to the key being searched on.
-	_, bucket_num := ThisNode.GetBucket(key.Xor(ThisNode.ThisContact.NodeID))
+	_, bucket_num := ThisNode.getBucket(key.Xor(ThisNode.ThisContact.NodeID))
 	for i := 0; i < 20 && shortlist_size < alpha; i++ {
 		if ThisNode.K_Buckets[bucket_num][i] != nil {
 			shortlist[shortlist_size] = ThisNode.K_Buckets[bucket_num][i]
@@ -318,7 +321,7 @@ func IterativeFindValue(key ID) int {
 		// TODO: this isn't parallel yet.
 		new_shortlist := make(Bucket,400)
 		for i := 0; i < len(shortlist); i++ {
-			Next_Open_Spot(contacted_nodes)
+			next_open_spot(contacted_nodes)
 			contacted_nodes[0] = shortlist[i]
 			if shortlist[i] != nil {
 				hostPortStr := get_host_port(contacted_nodes[i])
@@ -413,4 +416,46 @@ func (k *Kademlia) find_closest(req_id ID, count int) []*Contact{
 	//Once full we need to sort. I'm being lazy and saving this for later
 	nodes = sort_contacts(nodes)
 	return nodes
+}
+
+//enter in shell as "run host:port host:port"
+func Run(listenStr string, firstPeerStr string) int {
+  
+  fmt.Printf("Kademlia starting up!\n")
+  ThisNode = NewKademlia()
+  ThisNode.ThisContact.IPAddr = strings.Split(listenStr, ":")[0]
+  port,_ := strconv.Atoi(strings.Split(listenStr, ":")[1])
+  ThisNode.ThisContact.Port = uint16(port)
+  //Register on server
+  rpc.Register(ThisNode)
+  rpc.HandleHTTP()
+  l, err := net.Listen("tcp", listenStr)
+  if err != nil {
+		log.Fatal("Listen: ", err)
+  }
+  
+  // Serve forever.
+  go http.Serve(l, nil)
+	
+	
+	/*
+   Add the first contact. For now, just create a new contact with host, port and a random nodeID
+   */
+	// ping the first peer
+	firstPeerContact := Ping2(firstPeerStr)
+	ThisNode.addContactToBuckets(firstPeerContact)
+	fmt.Printf("Made it to before iterative\n")
+	// find and add the closest contacts to this node
+	closestContacts := IterativeFindNode(ThisNode.ThisContact.NodeID)
+	fmt.Printf("Made it through iterativeFindNode\n")
+	for i := 0; i < len(closestContacts); i++ {
+		if closestContacts[i] != nil {
+			fmt.Printf("contact: %v\n",closestContacts[i])
+			ThisNode.addContactToBuckets(closestContacts[i])
+		}
+	}
+	//id_list := kademlia.ThisNode.Local_Random_Nodes()
+	//fmt.Printf("Made it through, have %d random nodes now in our buckets\n", len(id_list))
+	return 1
+  
 }
