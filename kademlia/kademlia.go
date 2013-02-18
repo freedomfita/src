@@ -179,10 +179,10 @@ func IterativeStore(key ID, value []byte) int {
 	//closestnode may want to be its own function that we call from FindNode, or at least
 	//that code should be in FindNode, since we need to populate res.Nodes with more than one bucket
 	for true {
-		log.Printf("%s\n",hostPortStr)
+		//log.Printf("%s\n",hostPortStr)
 		client, err := rpc.DialHTTP("tcp", hostPortStr)
 		if err != nil {
-			log.Printf("1\n")
+			//log.Printf("1\n")
 			log.Fatal("DialHTTP: ", err)
 		}
 		req := new(FindNodeRequest)
@@ -197,7 +197,7 @@ func IterativeStore(key ID, value []byte) int {
     		}
     client.Close()
     		// obviously we need to do something with the array here, not just take the first element
-    		log.Printf("Node 0: %v\n",res.Nodes[0])
+    		//log.Printf("Node 0: %v\n",res.Nodes[0])
     		nextClosestNode, dist := res.Nodes[0], key.Xor(res.Nodes[0].NodeID)
     		for i:= 0; i < len(res.Nodes); i++ {
     			if res.Nodes[i].Port != 0 {
@@ -245,7 +245,8 @@ func IterativeStore(key ID, value []byte) int {
       }
     }
   }
-	log.Printf("NodeID receiving STORE operation: %d\n",closestNode.NodeID)
+	//log.Printf("NodeID receiving STORE operation: %d\n",closestNode.NodeID)
+	fmt.Printf("\n")
 	return 1
 }
 
@@ -259,11 +260,11 @@ func IterativeFindNode(id ID) Bucket {
 	req.NodeID = id
 	req.MsgID = NewRandomID()
 	var k_res FindNodeResult
-	fmt.Printf("In Iterative Find Node, before finding initial nodes closest to NodeID %v\n",id)
+	//fmt.Printf("In Iterative Find Node, before finding initial nodes closest to NodeID %v\n",id)
 	err := ThisNode.FindNode(req,&k_res)
 	
 	k_closest := foundNodeArr_to_Bucket(k_res.Nodes)
-	fmt.Printf("In Iterative Find Node, after finding initial nodes closest to NodeID\n")
+	//fmt.Printf("In Iterative Find Node, after finding initial nodes closest to NodeID\n")
 	if err != nil {
 		log.Fatal("Call: ", err)
     	}
@@ -276,7 +277,7 @@ func IterativeFindNode(id ID) Bucket {
 			
 		} else if k_closest[i].Port != 0 {
 			hostPortStr := get_host_port(k_closest[i])
-			log.Printf("Host/Port: %s\n",hostPortStr)
+			//log.Printf("Host/Port: %s\n",hostPortStr)
 			client, err := rpc.DialHTTP("tcp", hostPortStr)
 			if err != nil {
 				log.Printf("2\n")
@@ -289,7 +290,7 @@ func IterativeFindNode(id ID) Bucket {
 			var res FindNodeResult
 			//if FindNode works, all of the closest nodes should be in res.
 			err = client.Call("Kademlia.FindNode", req, &res)
-			log.Printf("NODES: %v\n",res.Nodes)
+			//log.Printf("NODES: %v\n",res.Nodes)
 			if err != nil {
 				log.Fatal("Call: ", err)
     			}
@@ -303,7 +304,7 @@ func IterativeFindNode(id ID) Bucket {
 		}
 		
 	}
-	fmt.Printf("Finished IterativeFindNode and returning array of contacts\n")
+	//fmt.Printf("Finished IterativeFindNode and returning array of contacts\n")
 	// print slice of <= k closest NodeIDs
 	//fmt.Printf("%v\n",kademlia.Sort_Contacts(big_arr)[:20])
 	return (sort_contacts(big_arr))
@@ -379,7 +380,7 @@ func IterativeFindValue(key ID) int {
           client.Close()
     				// if res.Err is nil, the node contains the value
     				if res.Err == nil {
-              log.Printf("OK\n")
+              				//log.Printf("OK\n")
     					log.Printf("FindValue: %v %v\n", shortlist[i].NodeID, res.Value)
     					return 0
     				} else {
@@ -416,7 +417,7 @@ func (k *Kademlia) find_closest(req_id ID, count int) []*Contact{
 	if b_num == 160{ // if req_id == k.NodeID, b_num will be 160. In this case we just exit
 		return nil
 	}
-	fmt.Printf("tried to access bucket %d\n",b_num)
+	//fmt.Printf("tried to access bucket %d\n",b_num)
 	b := k.K_Buckets[b_num] //get corresponding bucket
 	nodes := make([]*Contact, count)  //make node array
 	j := 0
@@ -481,13 +482,13 @@ func Run(listenStr string, firstPeerStr string) int {
 	// ping the first peer
 	firstPeerContact := Ping2(firstPeerStr)
 	ThisNode.addContactToBuckets(firstPeerContact)
-	fmt.Printf("Made it to before iterative\n")
+	//fmt.Printf("Made it to before iterative\n")
 	// find and add the closest contacts to this node
 	closestContacts := IterativeFindNode(ThisNode.ThisContact.NodeID)
-	fmt.Printf("Made it through iterativeFindNode\n")
+	//fmt.Printf("Made it through iterativeFindNode\n")
 	for i := 0; i < len(closestContacts); i++ {
 		if closestContacts[i] != nil {
-			fmt.Printf("contact: %v\n",closestContacts[i])
+			//fmt.Printf("contact: %v\n",closestContacts[i])
 			ThisNode.addContactToBuckets(closestContacts[i])
 		}
 	}

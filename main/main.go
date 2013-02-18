@@ -51,10 +51,10 @@ func main() {
 	    
 	    arg_s := strings.Split(input, " ")
 	    length := len(arg_s)
-	    log.Printf("there were %d\n", length)
+	    /*log.Printf("there were %d\n", length)
 	    for i := 0; i < length; i++ {
 	    	log.Printf("number %d: %s", i, arg_s[i])
-	    }
+	    }*/
 	    
 	    if len(arg_s) == 0 { //do nothing if command line is empty
 	    	continue

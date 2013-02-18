@@ -71,21 +71,21 @@ func (k *Kademlia) next_open_spot(b_num int) {
 	b := k.K_Buckets[b_num]
 	open_spot := -1
 	b_len := len(b)
-	fmt.Printf("Looking for next open spot in bucket %v\n", b_num)
+	//fmt.Printf("Looking for next open spot in bucket %v\n", b_num)
 	if b[0] ==nil{
 		return
 	}
 	for i:=1;i<b_len;i++{
 		if b[i]==nil{
 			open_spot=i
-			fmt.Printf("Open spot at %v\n",i)
+			//fmt.Printf("Open spot at %v\n",i)
 			break
 		}
 	}
 	//if open_spot==-1, list is full
 	//so pop last entry(which is really the first) and shift list one spot to the right
 	if open_spot==-1{
-		fmt.Printf("Popping %v\n", b[b_len-1])
+		//fmt.Printf("Popping %v\n", b[b_len-1])
 		b[b_len-1] = nil //make last entry nil
 		//shift list
 		for i:=b_len-2;i>0;i--{
@@ -97,8 +97,8 @@ func (k *Kademlia) next_open_spot(b_num int) {
 	//else, shift list over one, with last entry at open_spot-1
 	//shift 0 to openspot -1 to 1 to openspot
 		for i:=open_spot;i>0;i--{
-			fmt.Printf("moving %v to %v\n",i-1,i)
-			fmt.Printf("Values: %v\n %v\n",b[i],b[i-1])
+			//fmt.Printf("moving %v to %v\n",i-1,i)
+			//fmt.Printf("Values: %v\n %v\n",b[i],b[i-1])
 			b[i] = b[i-1]
 		}
 		b[0]=nil
