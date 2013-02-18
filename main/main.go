@@ -68,7 +68,7 @@ func main() {
 	    	// Serve forever.
 	    	go http.Serve(l, nil)
         
-	    	kademlia.ThisNode.Main_Testing()
+	    	kademlia.Main_Testing(kademlia.ThisNode)
         
 	    } else if arg_s[0] == "run" && is_cmd_valid(arg_s,2) {
 	    	kademlia.Run(arg_s[1],arg_s[2])

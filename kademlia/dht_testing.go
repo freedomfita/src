@@ -43,7 +43,7 @@ func (k *Kademlia) local_random_nodes() []ID{
 }
 
 //takes in id_list from random_nodes and runs test
-func (k *Kademlia) Main_Testing(){
+func Main_Testing(k* Kademlia){
 
 	//id_list := k.local_random_nodes()
 	fmt.Printf("*****************\n*****************\n*****************\n")
