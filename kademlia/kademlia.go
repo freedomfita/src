@@ -97,7 +97,11 @@ func Ping2(nodeToPing string) *Contact {
     log.Printf("ping msgID: %s\n", ping.MsgID.AsString())
     log.Printf("pong msgID: %s\n", pong.MsgID.AsString())
     //fmt.Printf("%s\n",pong.Sender.NodeID.AsString())
-	return &pong.Sender
+  sender := new(Contact)
+  sender.NodeID = pong.Sender.NodeID
+  sender.IPAddr = pong.Sender.IPAddr
+  sender.Port = pong.Sender.Port
+	return sender
 }
 
 func store(hostAndPort string, key ID, data []byte) int {
@@ -153,7 +157,7 @@ func Get_local_value(key ID) int {
 }
 func Get_node_id() int {
 	log.Printf("Node ID of this node: %s\n",ThisNode.ThisContact.NodeID.AsString())
-	log.Printf("IP/Port: %v %v\n",ThisNode.ThisContact.IPAddr,ThisNode.ThisContact.Port)
+	//log.Printf("IP/Port: %v %v\n",ThisNode.ThisContact.IPAddr,ThisNode.ThisContact.Port)
 	return 0
 }
 
@@ -193,7 +197,7 @@ func IterativeStore(key ID, value []byte) int {
     		log.Printf("Node 0: %v\n",res.Nodes[0])
     		nextClosestNode, dist := res.Nodes[0], key.Xor(res.Nodes[0].NodeID)
     		for i:= 0; i < len(res.Nodes); i++ {
-    			if res.Nodes[i].NodeID.Xor(key).Less(dist) {
+    			if res.Nodes[i].NodeID.Xor(key).Less(dist) && res.Nodes[i].Port != 0 {
     				dist = res.Nodes[i].NodeID.Xor(key)
     				nextClosestNode = res.Nodes[i]
     			}

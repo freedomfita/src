@@ -14,13 +14,15 @@ type Ping struct {
 
 type Pong struct {
     MsgID ID
-    Sender Contact
+    Sender FoundNode
 }
 
 func (k *Kademlia) Ping(ping Ping, pong *Pong) error {
     // This one's a freebie.
     pong.MsgID = CopyID(ping.MsgID)
-    pong.Sender = *k.ThisContact
+    pong.Sender.NodeID = CopyID(k.ThisContact.NodeID)
+    pong.Sender.IPAddr = k.ThisContact.IPAddr
+    pong.Sender.Port = k.ThisContact.Port
     return nil
 }
 

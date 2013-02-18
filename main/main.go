@@ -1,7 +1,7 @@
 package main
 
 import (
-    "flag"
+    //"flag"
     "fmt"
     "log"
     "math/rand"
@@ -26,8 +26,16 @@ func main() {
     // generate the same sequence of IDs.
     rand.Seed(time.Now().UnixNano())
 	    // Get the bind and connect connection strings from command-line arguments.
+    /*
     flag.Parse()
-    //args := flag.Args()
+    args := flag.Args()
+    if len(args) != 2 {
+        log.Fatal("Must be invoked with exactly two arguments!\n")
+    }
+    listenStr := args[0]
+    firstPeerStr := args[1]
+    kademlia.Run(listenStr,firstPeerStr)
+    */
     log.Printf("\nType q to quit\nFormat of Run\nrun str str")
     
     
@@ -59,7 +67,7 @@ func main() {
 	    	//Register on server
 	    	rpc.Register(kademlia.ThisNode)
 	    	rpc.HandleHTTP()
-	    	// why is localhost:7890 hardcoded here??
+	    	// XXX TODO: change to net.Listen("tcp",listenStr) XXX
 	    	l, err := net.Listen("tcp", "localhost:7890")
 	    	if err != nil {
 	    		log.Fatal("Listen: ", err)
