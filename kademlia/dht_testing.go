@@ -1,11 +1,10 @@
-package dht_testing
+package kademlia
 //only populates the kbuckets randomly, not by distance, more just to check things
 import (
 	"fmt"
 	"log"
 )
 import (
-	"kademlia"
 	"main"
 )
 const num_test_nodes = 50
