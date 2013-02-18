@@ -94,11 +94,11 @@ func main() {
 	    	k,_ := kademlia.FromString(arg_s[1])
 		b := []byte(arg_s[2])
 	    	kademlia.IterativeStore(k,b)
-	    } else if arg_s[0] == "find_node" && is_cmd_valid(arg_s,1){
-	    	k,_ := kademlia.FromString(arg_s[1])
-	    	kademlia.IterativeFindValue(k)
-	    } else if arg_s[0] == "find_value" && is_cmd_valid(arg_s,1){
-	    	k,_ := kademlia.FromString(arg_s[1])
+	    } else if arg_s[0] == "find_node" && is_cmd_valid(arg_s,2){
+	    	k,_ := kademlia.FromString(arg_s[2])
+	    	kademlia.IterativeFindNode(k)
+	    } else if arg_s[0] == "find_value" && is_cmd_valid(arg_s,2){
+	    	k,_ := kademlia.FromString(arg_s[2])
 	    	kademlia.IterativeFindValue(k)
 	    } else {
 	    	log.Printf("Command/s unknown.")

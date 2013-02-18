@@ -315,8 +315,8 @@ func IterativeFindNode(id ID) Bucket {
 		
 	}
 	// print slice of <= k closest NodeIDs
-	fmt.Printf("%v\n",sort_contacts(big_arr)[:20])
-	return (sort_contacts(big_arr))
+	fmt.Printf("%v\n",bucket_to_FoundNodeArr(sort_contacts(big_arr)[:20]))
+	return (sort_contacts(big_arr)[:20])
 }
 
 /*
@@ -497,7 +497,6 @@ func Run(listenStr string, firstPeerStr string) int {
 	//fmt.Printf("Made it through iterativeFindNode\n")
 	for i := 0; i < len(closestContacts); i++ {
 		if closestContacts[i] != nil {
-			fmt.Printf("contact: %v\n",closestContacts[i])
 			ThisNode.addContactToBuckets(closestContacts[i])
 		}
 	}
