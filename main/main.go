@@ -5,9 +5,9 @@ import (
     "fmt"
     "log"
     "math/rand"
-    "net"
-    "net/http"
-    "net/rpc"
+    //"net"
+    //"net/http"
+    //"net/rpc"
     "time"
     "os"
     "bufio"
@@ -65,16 +65,7 @@ func main() {
 	    	kademlia.ThisNode = kademlia.NewKademlia()
 	    	    
 	    	//Register on server
-	    	rpc.Register(kademlia.ThisNode)
-	    	rpc.HandleHTTP()
-	    	// XXX TODO: change to net.Listen("tcp",listenStr) XXX
-	    	l, err := net.Listen("tcp", "localhost:7890")
-	    	if err != nil {
-	    		log.Fatal("Listen: ", err)
-	    	}
-	    	
-	    	// Serve forever.
-	    	go http.Serve(l, nil)
+	    	kademlia.Run("localhost:7890","localhost:7890")
         
 	    	kademlia.Main_Testing(kademlia.ThisNode)
         

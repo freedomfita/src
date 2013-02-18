@@ -42,8 +42,7 @@ func (k *Kademlia) Local_Random_Nodes() []ID{
 
 //takes in id_list from Random_Nodes and runs test
 func Main_Testing(k *Kademlia){
-	k.ThisContact.IPAddr= "localhost"
-	k.ThisContact.Port = 7890
+	
 	//id_list := k.Local_Random_Nodes()
 	fmt.Printf("*****************\n*****************\n*****************\n")
 	//Test_Iterative_Find_Node(id_list)
