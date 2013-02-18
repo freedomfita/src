@@ -142,11 +142,22 @@ func store(hostAndPort string, key ID, data []byte) int {
 }
 func Find_node(key ID) int {
 	bucket,_ := ThisNode.getBucket(key)
-	nodes := bucket.FindNode(key)
-	fmt.Println(nodes)
+	//nodes := bucket.FindNode(key)
+	bucket_Find_Node(bucket, key)
 
 	return 0
 }
+
+func bucket_Find_Node(b Bucket, key ID){
+	for i:=0;i<len(b);i++{
+		if key.Equals(b[i].NodeID){
+		fmt.Printf("%v %v\n", b[i].IPAddr, b[i].Port)
+		return
+		}
+	}
+	fmt.Printf("ERR")
+}
+
 func Get_local_value(key ID) int {
     if ThisNode.Data[key] != nil {
 		log.Printf("OK: %v\n", ThisNode.Data[key])
