@@ -145,3 +145,20 @@ func (kadem *Kademlia) AddContactToBuckets(node *Contact) int {
     
     return 0
 }
+
+// interface to allow for sorting within buckets
+func (s Bucket) Len() int      { return len(s) }
+func (s Bucket) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+// BucketSort_ByNodeID implements sort.Interface by providing Less and using the Len and
+// Swap methods of the embedded Organs value.
+type BucketSort_ByNodeID struct{ Bucket }
+
+func (s BucketSort_ByNodeID) Less(i, j int) bool { 
+if s.Bucket[i] == nil {
+	return false //nil's go at the end
+} else if s.Bucket[j] == nil {
+	return true
+}
+	return s.Bucket[i].NodeID.Less(s.Bucket[j].NodeID) 
+}

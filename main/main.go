@@ -76,10 +76,10 @@ func main() {
 	    	run(arg_s[1],arg_s[2])
 	    } else if arg_s[0] == "ping" && is_cmd_valid(arg_s,1,true) {
 	    	ping(arg_s[1])
-	    } else if arg_s[0] == "store" && is_cmd_valid(arg_s,3,true) {
+	    } else if arg_s[0] == "store" && is_cmd_valid(arg_s,2,true) {
 	    	// k and b are just placeholders for now
-	    	var k kademlia.ID
-	    	var b []byte
+	    	k,_ := kademlia.FromString(arg_s[1])
+	    	b := []byte(arg_s[2])
 	    	iterativeStore(k,b)
 	    } else if arg_s[0] == "find_node" && is_cmd_valid(arg_s,1,true) {
 	    	    	id, err := kademlia.FromString(arg_s[1])
@@ -89,7 +89,8 @@ func main() {
 		    	find_node(id)
 
 	    } else if arg_s[0] == "find_value" && is_cmd_valid(arg_s,1,true) {
-	    	find_value(arg_s[1])
+	    	k,_ := kademlia.FromString(arg_s[1])
+	    	iterativeFindValue(k)
 	    } else if arg_s[0] == "get_local_value" && is_cmd_valid(arg_s,1,true) {
 	    	    	id, err := kademlia.FromString(arg_s[1])
 		    	if err != nil {
@@ -129,18 +130,19 @@ func run(listenStr string, firstPeerStr string) int {
 	*/
 	// ping the first peer
 	firstPeerContact := ping(firstPeerStr)
+	thisNode.AddContactToBuckets(firstPeerContact)
 	fmt.Printf("Made it to before iterative\n")
 	// find and add the closest contacts to this node
-	closestContacts := iterativeFindNode(firstPeerContact.NodeID)
+	closestContacts := iterativeFindNode(thisNode.ThisContact.NodeID)
 	fmt.Printf("Made it through iterativeFindNode\n")
 	for i := 0; i < len(closestContacts); i++ {
-		fmt.Printf("finding closest contact %d\n",i)
 		if closestContacts[i] != nil {
+			fmt.Printf("contact: %v\n",closestContacts[i])
 			thisNode.AddContactToBuckets(closestContacts[i])
 		}
 	}
-	id_list := thisNode.Local_Random_Nodes()
-	fmt.Printf("Made it through, have %d random nodes now in our buckets\n", len(id_list))
+	//id_list := thisNode.Local_Random_Nodes()
+	//fmt.Printf("Made it through, have %d random nodes now in our buckets\n", len(id_list))
 	return 1
 
 }
@@ -195,6 +197,7 @@ func ping(nodeToPing string) *kademlia.Contact {
 
     log.Printf("ping msgID: %s\n", ping.MsgID.AsString())
     log.Printf("pong msgID: %s\n", pong.MsgID.AsString())
+    //fmt.Printf("%s\n",pong.Sender.NodeID.AsString())
 	return &pong.Sender
 }
 
@@ -328,6 +331,7 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 			var res kademlia.FindNodeResult
 			//if FindNode works, all of the closest nodes should be in res.
 			err = client.Call("Kademlia.FindNode", req, &res)
+			log.Printf("NODES: %v\n",res.Nodes)
 			if err != nil {
 				log.Fatal("Call: ", err)
     			}
@@ -341,8 +345,8 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 	}
 	fmt.Printf("Finished IterativeFindNode and returning array of contacts\n")
 	// print slice of <= k closest NodeIDs
-	fmt.Printf("%v\n",kademlia.Sort_Contacts(big_arr)[:20])
-	return (kademlia.Sort_Contacts(big_arr))[:20]
+	//fmt.Printf("%v\n",kademlia.Sort_Contacts(big_arr)[:20])
+	return (kademlia.Sort_Contacts(big_arr))
 }
 
 /*
