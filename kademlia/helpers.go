@@ -59,6 +59,10 @@ func get_host_port(c *Contact) string {
 func (kadem *Kademlia) addContactToBuckets(node *Contact) int {
 
     _, idx := kadem.getBucket(node.NodeID)
+    if node.NodeID == kadem.ThisContact.NodeID {
+      // we don't want to add our own contact info to buckets, so return
+      return 0
+    }
     //frees up first
     kadem.next_open_spot(idx)
     kadem.K_Buckets[idx][0] = node
@@ -106,8 +110,10 @@ func (k *Kademlia) next_open_spot(b_num int) {
 }
 
   func (kadem *Kademlia) getBucket(dist ID) (Bucket,int) {
-    // if PrefixLen == x, then 2^(160-(x+1)) <= ID < 2^(160-x), so the bucket # is (159-x)
-    bucketNum := NumBuckets - (dist.PrefixLen() + 1)
+    bucketNum := dist.PrefixLen()-1
+    if bucketNum == -1 {
+      return nil,-1
+    }
     return kadem.K_Buckets[bucketNum], bucketNum
   }
   

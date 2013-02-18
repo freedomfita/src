@@ -423,8 +423,8 @@ func IterativeFindValue(key ID) int {
 func (k *Kademlia) find_closest(req_id ID, count int) []*Contact{
 	//fmt.Printf("Prepare to Xor:\n|%v|\n|%v|\n", req_id, k.ThisContact.NodeID)
 	b_num := req_id.Xor(k.ThisContact.NodeID).PrefixLen() //get bucket number
-	if b_num == 160{ // if req_id == k.NodeID, b_num will be 160. In this case we just exit
-		return nil
+	if b_num == 160{ // if req_id == k.NodeID, b_num will be 160. In this case use b_num = 159
+    b_num--
 	}
 	//fmt.Printf("tried to access bucket %d\n",b_num)
 	b := k.K_Buckets[b_num] //get corresponding bucket
