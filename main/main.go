@@ -119,7 +119,9 @@ func run(listenStr string, firstPeerStr string) int {
 	fmt.Printf("Made it through iterativeFindNode\n")
 	for i := 0; i < len(closestContacts); i++ {
 		fmt.Printf("finding closest contact %d\n",i)
-		thisNode.AddContactToBuckets(closestContacts[i])
+		if closestContacts[i] != nil {
+			thisNode.AddContactToBuckets(closestContacts[i])
+		}
 	}
 	id_list := thisNode.Local_Random_Nodes()
 	fmt.Printf("Made it through, have %d random nodes now in our buckets\n", len(id_list))
@@ -283,6 +285,7 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 	var k_res kademlia.FindNodeResult
 	fmt.Printf("In Iterative Find Node, before finding initial nodes closest to NodeID %v\n",id)
 	err := thisNode.FindNode(req,&k_res)
+	
 	k_closest := kademlia.FoundNode_to_Bucket(k_res.Nodes)
 	fmt.Printf("In Iterative Find Node, after finding initial nodes closest to NodeID\n")
 	if err != nil {
@@ -290,31 +293,33 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
     	}
 	//initialize array to hold all 20^2 contacts, which we'll sort later
 	big_arr := make(kademlia.Bucket, 400)
+
 	for i :=0;i<len(k_closest);i++{
 		//find 20 closest for each node.
-		if k_closest[i] == nil{
-			continue
-		}
-		hostPortStr := get_host_port(k_closest[i])
-		
-		client, err := rpc.DialHTTP("tcp", hostPortStr)
-		if err != nil {
-			log.Fatal("DialHTTP: ", err)
-		}
-		req := new(kademlia.FindNodeRequest)
-		req.MsgID = kademlia.NewRandomID()
-		req.NodeID = id
+		if k_closest[i] == nil {
 			
-		var res kademlia.FindNodeResult
-		//if FindNode works, all of the closest nodes should be in res.
-		err = client.Call("Kademlia.FindNode", req, &res)
-		if err != nil {
-			log.Fatal("Call: ", err)
-    		}
-    		offset:= 20 * i
-    		resBucket := kademlia.FoundNode_to_Bucket(res.Nodes)
-		for j := 0; j<len(resBucket); j++{
-			big_arr[j+offset] = resBucket[j]
+		} else if k_closest[i].Port != 0 {
+			hostPortStr := get_host_port(k_closest[i])
+			log.Printf("Host/Port: %s\n",hostPortStr)
+			client, err := rpc.DialHTTP("tcp", hostPortStr)
+			if err != nil {
+				log.Fatal("DialHTTP: ", err)
+			}
+			req := new(kademlia.FindNodeRequest)
+			req.MsgID = kademlia.NewRandomID()
+			req.NodeID = id
+			
+			var res kademlia.FindNodeResult
+			//if FindNode works, all of the closest nodes should be in res.
+			err = client.Call("Kademlia.FindNode", req, &res)
+			if err != nil {
+				log.Fatal("Call: ", err)
+    			}
+    			offset:= 20 * i
+    			resBucket := kademlia.FoundNode_to_Bucket(res.Nodes)
+			for j := 0; j<len(resBucket); j++{
+				big_arr[j+offset] = resBucket[j]
+			}
 		}
 		
 	}
@@ -374,27 +379,28 @@ func iterativeFindValue(key kademlia.ID) int {
 				client, err := rpc.DialHTTP("tcp", hostPortStr)
 				if err != nil {
 					// TODO: this definitely shouldn't be a fatal error, it should just go on to the next node
-					log.Fatal("DialHTTP: ", err)
-				}
-				req := new(kademlia.FindValueRequest)
-				req.MsgID = kademlia.NewRandomID()
-				req.Key = key
+					log.Printf("DialHTTP: %e\n", err)
+				} else {
+					req := new(kademlia.FindValueRequest)
+					req.MsgID = kademlia.NewRandomID()
+					req.Key = key
 			
-				var res kademlia.FindValueResult
-				err = client.Call("Kademlia.FindValue", req, &res)
-				if err != nil {
-					log.Fatal("Call: ", err)
-    			}
-    			// if res.Err is nil, the node contains the value
-    			if res.Err == nil {
-    				log.Printf("%v %v\n", shortlist[i].IPAddr, res.Value)
-    				return 0
-    			} else {
-    				offset:= 20 * i
-    				resBucket := kademlia.FoundNode_to_Bucket(res.Nodes)
-					for j := 0; j<len(resBucket); j++{
-						new_shortlist[j+offset] = resBucket[j]
-					}
+					var res kademlia.FindValueResult
+					err = client.Call("Kademlia.FindValue", req, &res)
+					if err != nil {
+						log.Fatal("Call: ", err)
+    				}	
+    				// if res.Err is nil, the node contains the value
+    				if res.Err == nil {
+    					log.Printf("%v %v\n", shortlist[i].IPAddr, res.Value)
+    					return 0
+    				} else {
+    					offset:= 20 * i
+    					resBucket := kademlia.FoundNode_to_Bucket(res.Nodes)
+						for j := 0; j<len(resBucket); j++{
+							new_shortlist[j+offset] = resBucket[j]
+						}
+    				}
     			}
     		}
     		shortlist_size = 0
