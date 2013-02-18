@@ -60,10 +60,10 @@ func main() {
 	    	run(arg_s[1],arg_s[2])
 	    } else if arg_s[0] == "ping" && is_cmd_valid(arg_s,1,true) {
 	    	ping(arg_s[1])
-	    } else if arg_s[0] == "store" && is_cmd_valid(arg_s,3,true) {
+	    } else if arg_s[0] == "store" && is_cmd_valid(arg_s,2,true) {
 	    	// k and b are just placeholders for now
-	    	var k kademlia.ID
-	    	var b []byte
+	    	k,_ := kademlia.FromString(arg_s[1])
+	    	b := []byte(arg_s[2])
 	    	iterativeStore(k,b)
 	    } else if arg_s[0] == "find_node" && is_cmd_valid(arg_s,1,true) {
 	    	    	id, err := kademlia.FromString(arg_s[1])
@@ -73,7 +73,8 @@ func main() {
 		    	find_node(id)
 
 	    } else if arg_s[0] == "find_value" && is_cmd_valid(arg_s,1,true) {
-	    	find_value(arg_s[1])
+	    k,_ := kademlia.FromString(arg_s[1])
+	    	iterativeFindValue(k)
 	    } else if arg_s[0] == "get_local_value" && is_cmd_valid(arg_s,1,true) {
 	    	    	id, err := kademlia.FromString(arg_s[1])
 		    	if err != nil {
@@ -207,9 +208,7 @@ func find_node(key kademlia.ID) int {
 
 	return 0
 }
-func find_value(key string) int {
-	return 0
-}
+
 func get_local_value(key kademlia.ID) int {
     if thisNode.Data[key] != nil {
 		log.Printf("OK: %v\n", thisNode.Data[key])
@@ -283,7 +282,7 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 	var k_res kademlia.FindNodeResult
 	fmt.Printf("In Iterative Find Node, before finding initial nodes closest to NodeID %v\n",id)
 	err := thisNode.FindNode(req,&k_res)
-	k_closest := k_res.Nodes
+	k_closest := kademlia.FoundNode_to_Bucket(k_res.Nodes)
 	fmt.Printf("In Iterative Find Node, after finding initial nodes closest to NodeID\n")
 	if err != nil {
 		log.Fatal("Call: ", err)
@@ -292,10 +291,14 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 	big_arr := make(kademlia.Bucket, 400)
 	for i :=0;i<len(k_closest);i++{
 		//find 20 closest for each node.
+<<<<<<< HEAD
 		if k_closest[i] == nil{
 			continue
 		}
 		hostPortStr := get_host_port(kademlia.FoundNode_to_Bucket(k_closest)[i])
+=======
+		hostPortStr := get_host_port(k_closest[i])
+>>>>>>> made some changes to command line parsing in main function
 		
 		client, err := rpc.DialHTTP("tcp", hostPortStr)
 		if err != nil {
