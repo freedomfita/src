@@ -292,6 +292,9 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 	big_arr := make(kademlia.Bucket, 400)
 	for i :=0;i<len(k_closest);i++{
 		//find 20 closest for each node.
+		if k_closest[i] == nil{
+			continue
+		}
 		hostPortStr := get_host_port(kademlia.FoundNode_to_Bucket(k_closest)[i])
 		
 		client, err := rpc.DialHTTP("tcp", hostPortStr)

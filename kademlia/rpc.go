@@ -123,8 +123,12 @@ func (k *Kademlia) Find_Closest(req_id ID, count int) []*Contact{
 //make sort function if above sorting isn't valid
 func Sort_Contacts(arr Bucket) Bucket {
 	///sorted_arr := make([]Contact, len(arr))
+	if arr[0] == nil{
+			return arr
+	}
 	for i:=1;i<len(arr);i++{
 		insert_val := arr[i]
+		fmt.Printf("Printing insertval: %v\n",insert_val)
 		hole_pos := i
 		
 		for ;hole_pos>0 && insert_val.NodeID.Less(arr[i-1].NodeID);{
