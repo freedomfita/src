@@ -40,8 +40,8 @@ type StoreResult struct {
 }
 
 func (k *Kademlia) Store(req StoreRequest, res *StoreResult) error {
-	k.Data[req.Key] = req.Value
 	res.MsgID = CopyID(req.MsgID)
+	k.Data[req.Key] = req.Value
     return nil
 }
 
@@ -56,6 +56,14 @@ type FoundNode struct {
     IPAddr string
     Port uint16
     NodeID ID
+}
+
+func (f *FoundNode) ToContactPtr() *Contact {
+	c := new(Contact)
+	c.NodeID = CopyID(f.NodeID)
+	c.Port = f.Port
+	c.IPAddr = f.IPAddr
+	return c
 }
 
 //****NOTE - I changed Nodes from FoundNode to Contact,just so it would be uniform, since FoundNode and Contact are identical
@@ -82,7 +90,7 @@ func (k *Kademlia) FindNode(req *FindNodeRequest, res *FindNodeResult) error {
 func (k *Kademlia) Find_Closest(req_id ID, count int) []*Contact{
 	//fmt.Printf("Prepare to Xor:\n|%v|\n|%v|\n", req_id, k.ThisContact.NodeID)
 	b_num := req_id.Xor(k.ThisContact.NodeID).PrefixLen() //get bucket number
-	if b_num == 160{
+	if b_num == 160{ // if req_id == k.NodeID, b_num will be 160. In this case we just exit
 		return nil
 	}
 	fmt.Printf("tried to access bucket %d\n",b_num)

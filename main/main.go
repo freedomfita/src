@@ -63,6 +63,7 @@ func main() {
 	    	//Register on server
 	    	rpc.Register(thisNode)
 	    	rpc.HandleHTTP()
+	    	// why is localhost:7890 hardcoded here??
 	    	l, err := net.Listen("tcp", "localhost:7890")
 	    	if err != nil {
 	    		log.Fatal("Listen: ", err)
@@ -111,7 +112,9 @@ func run(listenStr string, firstPeerStr string) int {
 
     fmt.Printf("Kademlia starting up!\n")
     thisNode = kademlia.NewKademlia()
-    
+    thisNode.ThisContact.IPAddr = strings.Split(listenStr, ":")[0]
+    port,_ := strconv.Atoi(strings.Split(listenStr, ":")[1])
+    thisNode.ThisContact.Port = uint16(port)
     //Register on server
     rpc.Register(thisNode)
     rpc.HandleHTTP()
@@ -185,7 +188,7 @@ func ping(nodeToPing string) *kademlia.Contact {
 	}
     client, err := rpc.DialHTTP("tcp", nodeToPing)
     if err != nil {
-	log.Fatal("DialHTTP: ", err)
+		log.Fatal("DialHTTP: ", err)
     }
     ping := new(kademlia.Ping)
     ping.MsgID = kademlia.NewRandomID()
@@ -206,19 +209,34 @@ func store(hostAndPort string, key kademlia.ID, data []byte) int {
 	if err != nil {
 		log.Fatal("DialHTTP: ", err)
     }
-    
-    /* initialize the Request and Result structs */
-    req := new(kademlia.StoreRequest)
+    /*
+    // check if the receiver has the value already
+    req := new(kademlia.FindValueRequest)
     req.MsgID = kademlia.NewRandomID()
     req.Key = key
-    req.Value = data
     
-    var res kademlia.StoreResult
-
+    var res kademlia.FindValueResult
 	err = client.Call("Kademlia.Store", req, &res)
     if err != nil {
-		log.Fatal("Call: ", err)
+    	log.Fatal("Call: ", err)
     }
+    // if res.Err == nil, then the node has the value for the key already
+    if res.Err != nil {
+    */
+    /* initialize the Request and Result structs */
+    	req := new(kademlia.StoreRequest)
+    	req.MsgID = kademlia.NewRandomID()
+    	req.Key = key
+    	req.Value = data
+    	
+    	var res kademlia.StoreResult
+		err = client.Call("Kademlia.Store", req, &res)
+    	if err != nil {
+			log.Fatal("Call: ", err)
+    	}
+    /* } else {
+    	fmt.Printf("Node already had value.\n")
+    } */
 	return 1
 }
 func find_node(key kademlia.ID) int {
@@ -226,9 +244,6 @@ func find_node(key kademlia.ID) int {
 	nodes := bucket.FindNode(key)
 	fmt.Println(nodes)
 
-	return 0
-}
-func find_value(key string) int {
 	return 0
 }
 func get_local_value(key kademlia.ID) int {
@@ -242,6 +257,7 @@ func get_local_value(key kademlia.ID) int {
 }
 func get_node_id() int {
 	log.Printf("Node ID of this node: %s\n",thisNode.ThisContact.NodeID.AsString())
+	log.Printf("IP/Port: %v %v\n",thisNode.ThisContact.IPAddr,thisNode.ThisContact.Port)
 	return 0
 }
 
@@ -254,16 +270,17 @@ func iterativeStore(key kademlia.ID, value []byte) int {
 	prevDistance := key.Xor(thisNode.ThisContact.NodeID)
 	
 	//var closestNode kademlia.FoundNode
-	var closestNode *kademlia.Contact
+	closestNode := thisNode.ThisContact
 	
 	hostPortStr := get_host_port(thisNode.ThisContact)
 	
 	//closestnode may want to be its own function that we call from FindNode, or at least
 	//that code should be in FindNode, since we need to populate res.Nodes with more than one bucket
 	for true {
-		
+		log.Printf("%s\n",hostPortStr)
 		client, err := rpc.DialHTTP("tcp", hostPortStr)
 		if err != nil {
+			log.Printf("1\n")
 			log.Fatal("DialHTTP: ", err)
 		}
 		req := new(kademlia.FindNodeRequest)
@@ -277,15 +294,23 @@ func iterativeStore(key kademlia.ID, value []byte) int {
 			log.Fatal("Call: ", err)
     		}
     		// obviously we need to do something with the array here, not just take the first element
-    		curDistance := key.Xor(res.Nodes[0].NodeID)
+    		log.Printf("Node 0: %v\n",res.Nodes[0])
+    		nextClosestNode, dist := res.Nodes[0], key.Xor(res.Nodes[0].NodeID)
+    		for i:= 0; i < len(res.Nodes); i++ {
+    			if res.Nodes[i].NodeID.Xor(key).Less(dist) {
+    				dist = res.Nodes[i].NodeID.Xor(key)
+    				nextClosestNode = res.Nodes[i]
+    			}
+    		}
+    		curDistance := key.Xor(nextClosestNode.NodeID)
     	
     		if !curDistance.Less(prevDistance) {
-    			closestNode = kademlia.FoundNode_to_Bucket(res.Nodes)[0]
     			break
+    		} else {
+    			closestNode = nextClosestNode.ToContactPtr()
     		}
     		hostPortStr = get_host_port(closestNode)
 		}
-	
 	hostPortStr = get_host_port(closestNode)
 	store(hostPortStr, key, value)
 	log.Printf("NodeID receiving STORE operation: %d\n",closestNode.NodeID)
@@ -322,6 +347,7 @@ func iterativeFindNode(id kademlia.ID) kademlia.Bucket {
 			log.Printf("Host/Port: %s\n",hostPortStr)
 			client, err := rpc.DialHTTP("tcp", hostPortStr)
 			if err != nil {
+				log.Printf("2\n")
 				log.Fatal("DialHTTP: ", err)
 			}
 			req := new(kademlia.FindNodeRequest)
@@ -354,6 +380,13 @@ printf("%v %v\n", ID, value), where ID refers to the node that finally
 returned the value. If you do not find a value, print "ERR".
 */
 func iterativeFindValue(key kademlia.ID) int {
+
+	// check if this node has the value
+	if thisNode.Data[key] {
+		log.Printf("%v %v\n", thisNode.ThisContact.IPAddr, thisNode.Data[key])
+		return 0
+	}
+
 	const alpha = 3
 	
 	contacted_nodes := make(kademlia.Bucket,1600)
@@ -399,6 +432,7 @@ func iterativeFindValue(key kademlia.ID) int {
 				client, err := rpc.DialHTTP("tcp", hostPortStr)
 				if err != nil {
 					// TODO: this definitely shouldn't be a fatal error, it should just go on to the next node
+					log.Printf("3\n")
 					log.Printf("DialHTTP: %e\n", err)
 				} else {
 					req := new(kademlia.FindValueRequest)
@@ -443,8 +477,12 @@ func iterativeFindValue(key kademlia.ID) int {
 }
 
 func get_host_port(c *kademlia.Contact) string {
+	if c == nil {
+		return ""
+	}
 	hostPort := make([]string,2)
 	hostPort[0] = c.IPAddr
 	hostPort[1] = strconv.FormatUint(uint64(c.Port),10)
-	return strings.Join(hostPort, ":")
+	hostPortStr := strings.Join(hostPort, ":")
+	return hostPortStr
 }

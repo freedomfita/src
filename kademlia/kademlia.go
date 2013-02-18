@@ -22,7 +22,6 @@ type Kademlia struct {
   ThisContact *Contact
   K_Buckets []Bucket
   Data map[ID]([]byte)
-  bucket_sizes []int
 }
 
 func NewKademlia() *Kademlia {
@@ -31,11 +30,10 @@ func NewKademlia() *Kademlia {
     kadem.ThisContact = new(Contact)
     kadem.ThisContact.NodeID = NewRandomID()
     kadem.K_Buckets = make([]Bucket,160)
-    kadem.bucket_sizes = make([]int,160)
     for i := 0; i < 160; i++ {
 	kadem.K_Buckets[i] = make(Bucket,20)
-	kadem.bucket_sizes[i] = 0
     }
+    kadem.Data = make(map[ID]([]byte))
     return kadem
 }
 
