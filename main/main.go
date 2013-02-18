@@ -20,7 +20,6 @@ import (
 )
 
 var running bool
-var thisNode *kademlia.Kademlia
 //myIP 192.168.0.145:7890
 //MoritzIP 192.168.0.123:7890
 func main() {
@@ -58,10 +57,10 @@ func main() {
 	    	return
 	    } else if arg_s[0] == "t" {
 	    	fmt.Printf("Kademlia starting up!\n")
-	    	thisNode = kademlia.NewKademlia()
+	    	kademlia.ThisNode = kademlia.NewKademlia()
 	    	    
 	    	//Register on server
-	    	rpc.Register(thisNode)
+	    	rpc.Register(kademlia.ThisNode)
 	    	rpc.HandleHTTP()
 	    	// why is localhost:7890 hardcoded here??
 	    	l, err := net.Listen("tcp", "localhost:7890")
@@ -71,36 +70,36 @@ func main() {
 	    	
 	    	// Serve forever.
 	    	go http.Serve(l, nil)
-		running = true
-	    	thisNode.Main_Testing()
+			running = true
+	    	kademlia.ThisNode.Main_Testing()
 	    } else if arg_s[0] == "run" && is_cmd_valid(arg_s,2,false) {
 	    	run(arg_s[1],arg_s[2])
 	    } else if arg_s[0] == "ping" && is_cmd_valid(arg_s,1,true) {
-	    	ping(arg_s[1])
+	    	kademlia.Ping2(arg_s[1])
 	    } else if arg_s[0] == "store" && is_cmd_valid(arg_s,2,true) {
 	    	// k and b are just placeholders for now
 	    	k,_ := kademlia.FromString(arg_s[1])
 	    	b := []byte(arg_s[2])
-	    	iterativeStore(k,b)
+	    	kademlia.IterativeStore(k,b)
 	    } else if arg_s[0] == "find_node" && is_cmd_valid(arg_s,1,true) {
 	    	    	id, err := kademlia.FromString(arg_s[1])
 		    	if err != nil {
 		    		log.Fatal("Find Node: ",err)
 		    	}
-		    	find_node(id)
+		    	kademlia.Find_node(id)
 
 	    } else if arg_s[0] == "find_value" && is_cmd_valid(arg_s,1,true) {
 	    	k,_ := kademlia.FromString(arg_s[1])
-	    	iterativeFindValue(k)
+	    	kademlia.IterativeFindValue(k)
 	    } else if arg_s[0] == "get_local_value" && is_cmd_valid(arg_s,1,true) {
 	    	    	id, err := kademlia.FromString(arg_s[1])
 		    	if err != nil {
 		    		log.Fatal("Get Local Value: ",err)
 		    	}
-		    	get_local_value(id)
+		    	kademlia.Get_local_value(id)
 
 	    } else if arg_s[0] == "get_node_id" && is_cmd_valid(arg_s,0,true) {
-	    	get_node_id()
+	    	kademlia.Get_node_id()
 	    } else {
 	    	log.Printf("Command/s unknown.")
 	    }
@@ -111,12 +110,12 @@ func main() {
 func run(listenStr string, firstPeerStr string) int {
 
     fmt.Printf("Kademlia starting up!\n")
-    thisNode = kademlia.NewKademlia()
-    thisNode.ThisContact.IPAddr = strings.Split(listenStr, ":")[0]
+    kademlia.ThisNode = kademlia.NewKademlia()
+    kademlia.ThisNode.ThisContact.IPAddr = strings.Split(listenStr, ":")[0]
     port,_ := strconv.Atoi(strings.Split(listenStr, ":")[1])
-    thisNode.ThisContact.Port = uint16(port)
+    kademlia.ThisNode.ThisContact.Port = uint16(port)
     //Register on server
-    rpc.Register(thisNode)
+    rpc.Register(kademlia.ThisNode)
     rpc.HandleHTTP()
     l, err := net.Listen("tcp", listenStr)
     if err != nil {
@@ -132,19 +131,19 @@ func run(listenStr string, firstPeerStr string) int {
 	Add the first contact. For now, just create a new contact with host, port and a random nodeID
 	*/
 	// ping the first peer
-	firstPeerContact := ping(firstPeerStr)
-	thisNode.AddContactToBuckets(firstPeerContact)
+	firstPeerContact := kademlia.Ping2(firstPeerStr)
+	kademlia.ThisNode.AddContactToBuckets(firstPeerContact)
 	fmt.Printf("Made it to before iterative\n")
 	// find and add the closest contacts to this node
-	closestContacts := iterativeFindNode(thisNode.ThisContact.NodeID)
+	closestContacts := kademlia.IterativeFindNode(kademlia.ThisNode.ThisContact.NodeID)
 	fmt.Printf("Made it through iterativeFindNode\n")
 	for i := 0; i < len(closestContacts); i++ {
 		if closestContacts[i] != nil {
 			fmt.Printf("contact: %v\n",closestContacts[i])
-			thisNode.AddContactToBuckets(closestContacts[i])
+			kademlia.ThisNode.AddContactToBuckets(closestContacts[i])
 		}
 	}
-	//id_list := thisNode.Local_Random_Nodes()
+	//id_list := kademlia.ThisNode.Local_Random_Nodes()
 	//fmt.Printf("Made it through, have %d random nodes now in our buckets\n", len(id_list))
 	return 1
 

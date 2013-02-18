@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"log"
 )
-import (
-	"main"
-)
+//import (
+//	"main"
+//)
 const num_test_nodes = 50
 
 //use MoritzIP for these nodes
-func (k *kademlia.Kademlia) Random_Nodes() []kademlia.ID{
-	id_list := make([]kademlia.ID, num_test_nodes)
+func (k *Kademlia) Random_Nodes() []ID{
+	id_list := make([]ID, num_test_nodes)
 	for i:=0;i<num_test_nodes;i++{
-		c:= new(kademlia.Contact)
-		c.NodeID = kademlia.NewRandomID()
+		c:= new(Contact)
+		c.NodeID = NewRandomID()
 		id_list[i] = c.NodeID
 		c.IPAddr = "192.168.0.123"
 		c.Port = 7890
@@ -26,11 +26,11 @@ func (k *kademlia.Kademlia) Random_Nodes() []kademlia.ID{
 
 }
 //use localhost for these nodes
-func (k *kademlia.Kademlia) Local_Random_Nodes() []kademlia.ID{
-	id_list := make([]kademlia.ID, num_test_nodes)
+func (k *Kademlia) Local_Random_Nodes() []ID{
+	id_list := make([]ID, num_test_nodes)
 	for i:=0;i<num_test_nodes;i++{
-		c:= new(kademlia.Contact)
-		c.NodeID = kademlia.NewRandomID()
+		c:= new(Contact)
+		c.NodeID = NewRandomID()
 		id_list[i] = c.NodeID
 		c.IPAddr = "localhost"
 		c.Port = 7890
@@ -43,7 +43,7 @@ func (k *kademlia.Kademlia) Local_Random_Nodes() []kademlia.ID{
 }
 
 //takes in id_list from Random_Nodes and runs test
-func (k *kademlia.Kademlia) Main_Testing(){
+func (k *Kademlia) Main_Testing(){
 
 	//id_list := k.Local_Random_Nodes()
 	fmt.Printf("*****************\n*****************\n*****************\n")
@@ -57,13 +57,13 @@ func (k *kademlia.Kademlia) Main_Testing(){
 }
 
 //Tests find Node
-func (k *kademlia.Kademlia) Test_Find_Nodes(id_list []kademlia.ID){
+func (k *Kademlia) Test_Find_Nodes(id_list []ID){
 
 	for i:=0;i<len(id_list);i++{
-		req := new(kademlia.FindNodeRequest)
+		req := new(FindNodeRequest)
 		req.NodeID = id_list[i]
-		req.MsgID = kademlia.NewRandomID()
-		var k_res kademlia.FindNodeResult
+		req.MsgID = NewRandomID()
+		var k_res FindNodeResult
 		err := k.FindNode(req,&k_res)
 		if err != nil {
 			log.Fatal("Call: ", err)
@@ -85,15 +85,15 @@ func (k *kademlia.Kademlia) Test_Find_Nodes(id_list []kademlia.ID){
 }
 //Test Iterative find node
 
-func Test_Iterative_Find_Node(id_list []kademlia.ID){
+func Test_Iterative_Find_Node(id_list []ID){
 	num_to_test := 2
 	for i:=0;i<num_to_test;i++{
-		b := iterativeFindNode(id_list[i])
+		b := IterativeFindNode(id_list[i])
 		fmt.Printf("Bucket#%v :\n%v\n",i,b)
 	}
 }
 
-func (k *kademlia.Kademlia) Print_KBuckets(){
+func (k *Kademlia) Print_KBuckets(){
 	for i:=0;i<15;i++{//len(k.K_Buckets);i++{
 		fmt.Printf("Printing Bucket #%v\n",i)
 		kb := k.K_Buckets[i]
@@ -109,7 +109,7 @@ func (k *kademlia.Kademlia) Print_KBuckets(){
 	}
 }
 
-func (k *kademlia.Kademlia) Print_KBuckets_bare(){
+func (k *Kademlia) Print_KBuckets_bare(){
 	for i:=0;i<160;i++{
 		count:= -1
 		kb:= k.K_Buckets[i]
@@ -128,7 +128,6 @@ func (k *kademlia.Kademlia) Print_KBuckets_bare(){
 		
 	}
 }
-
 
 
 
