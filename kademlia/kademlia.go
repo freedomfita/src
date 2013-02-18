@@ -124,7 +124,7 @@ func (k *Kademlia) Next_Open_Spot(b_num int) {
 	//else, shift list over one, with last entry at open_spot-1
 	//shift 0 to openspot -1 to 1 to openspot
 		for i:=open_spot;i>0;i--{
-			fmt.Printf("moving %v to %v\n",i,i-1)
+			fmt.Printf("moving %v to %v\n",i-1,i)
 			fmt.Printf("Values: %v\n %v\n",b[i],b[i-1])
 			b[i] = b[i-1]
 		}

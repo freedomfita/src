@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 )
+const num_test_nodes = 50
 
 func (k *Kademlia) Add_Random_Nodes(){
 	L := len(k.K_Buckets)
@@ -20,8 +21,8 @@ func (k *Kademlia) Add_Random_Nodes(){
 }
 //use MoritzIP for these nodes
 func (k *Kademlia) Random_Nodes() []ID{
-	id_list := make([]ID, 50)
-	for i:=0;i<50;i++{
+	id_list := make([]ID, num_test_nodes)
+	for i:=0;i<num_test_nodes;i++{
 		c:= new(Contact)
 		c.NodeID = NewRandomID()
 		id_list[i] = c.NodeID
@@ -36,8 +37,8 @@ func (k *Kademlia) Random_Nodes() []ID{
 }
 //use localhost for these nodes
 func (k *Kademlia) Local_Random_Nodes() []ID{
-	id_list := make([]ID, 50)
-	for i:=0;i<50;i++{
+	id_list := make([]ID, num_test_nodes)
+	for i:=0;i<num_test_nodes;i++{
 		c:= new(Contact)
 		c.NodeID = NewRandomID()
 		id_list[i] = c.NodeID
@@ -56,11 +57,11 @@ func (k *Kademlia) Main_Testing(){
 
 	id_list := k.Local_Random_Nodes()
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	fmt.Printf("%v",len(id_list))
-	//k.Test_Find_Nodes(id_list)
+	//fmt.Printf("%v",len(id_list))
+	k.Test_Find_Nodes(id_list)
 	//fmt.Printf("ID_LIST\n%v\n",id_list)
 	//k.Print_KBuckets()
-
+	k.Print_KBuckets_bare()
 }
 
 
@@ -77,9 +78,9 @@ func (k *Kademlia) Test_Find_Nodes(id_list []ID){
 		}
 		b := k_res.Nodes
 		//b := main.iterativeFindNode(id_list[i])
-		//fmt.Printf("results for b%v found, begin printing\n",i)
+		fmt.Printf("results for b%v found, begin printing\n",i)
 		for j:=0;j<len(b);j++{
-			//fmt.Printf("#%v: %v\n",j,b[j])
+			fmt.Printf("#%v: %v\n",j,b[j])
 			if b[j].Port == 0{
 				fmt.Printf("B%v has %v elements\n", i,j)
 				break
@@ -104,6 +105,26 @@ func (k *Kademlia) Print_KBuckets(){
 			//}
 			
 		}
+	}
+}
+
+func (k *Kademlia) Print_KBuckets_bare(){
+	for i:=0;i<160;i++{
+		count:= -1
+		kb:= k.K_Buckets[i]
+		for j:=0;j<len(kb);j++{
+			if kb[j] == nil{
+			count = j
+				//fmt.Printf("Bucket %v has %v elements\n",i,j)
+				break
+			}
+		}
+		if count==-1{ //bucket is full
+			count = len(kb)
+		}
+		fmt.Printf("Bucket %v has %v elements\n",i,count)
+	
+		
 	}
 }
 
