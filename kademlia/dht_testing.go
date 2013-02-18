@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"log"
 )
-//import (
-//	"main"
-//)
+
 const num_test_nodes = 50
 
 //use MoritzIP for these nodes
-func (k *Kademlia) random_nodes() []ID{
+func (k *Kademlia) Random_Nodes() []ID{
 	id_list := make([]ID, num_test_nodes)
 	for i:=0;i<num_test_nodes;i++{
 		c:= new(Contact)
@@ -26,7 +24,7 @@ func (k *Kademlia) random_nodes() []ID{
 
 }
 //use localhost for these nodes
-func (k *Kademlia) local_random_nodes() []ID{
+func (k *Kademlia) Local_Random_Nodes() []ID{
 	id_list := make([]ID, num_test_nodes)
 	for i:=0;i<num_test_nodes;i++{
 		c:= new(Contact)
@@ -42,22 +40,26 @@ func (k *Kademlia) local_random_nodes() []ID{
 
 }
 
-//takes in id_list from random_nodes and runs test
-func Main_Testing(k* Kademlia){
-
-	//id_list := k.local_random_nodes()
+//takes in id_list from Random_Nodes and runs test
+func Main_Testing(k *Kademlia){
+	k.ThisContact.IPAddr= "localhost"
+	k.ThisContact.Port = 7890
+	//id_list := k.Local_Random_Nodes()
 	fmt.Printf("*****************\n*****************\n*****************\n")
 	//Test_Iterative_Find_Node(id_list)
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	//k.test_find_nodes(id_list)
+	//k.Test_Find_Nodes(id_list)
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	//k.print_kBuckets()
+	//k.Print_KBuckets()
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	//k.print_kBuckets_bare()
+	//k.Print_KBuckets_bare()
+	fmt.Printf("*****************\n*****************\n*****************\n")
+	Test_Iterative_Store()
+	fmt.Printf("*****************\n*****************\n*****************\n")
 }
 
 //Tests find Node
-func (k *Kademlia) test_find_nodes(id_list []ID){
+func (k *Kademlia) Test_Find_Nodes(id_list []ID){
 
 	for i:=0;i<len(id_list);i++{
 		req := new(FindNodeRequest)
@@ -93,7 +95,22 @@ func Test_Iterative_Find_Node(id_list []ID){
 	}
 }
 
-func (k *Kademlia) print_kBuckets(){
+func Test_Iterative_Store(){
+	//pass in random value
+	val := make([]byte,20)
+	id_list := make([]ID,num_test_nodes)
+	for i:=0;i<num_test_nodes;i++{
+		id_list[i] = NewRandomID()
+		fmt.Printf("Created New ID : %v\n",id_list[i])
+		err := IterativeStore(id_list[i], val)
+		if err != 1{
+			fmt.Printf("ERROR at IterativeStore\n")
+		}
+	}
+	
+}
+
+func (k *Kademlia) Print_KBuckets(){
 	for i:=0;i<15;i++{//len(k.K_Buckets);i++{
 		fmt.Printf("Printing Bucket #%v\n",i)
 		kb := k.K_Buckets[i]
@@ -109,7 +126,7 @@ func (k *Kademlia) print_kBuckets(){
 	}
 }
 
-func (k *Kademlia) print_kBuckets_bare(){
+func (k *Kademlia) Print_KBuckets_bare(){
 	for i:=0;i<160;i++{
 		count:= -1
 		kb:= k.K_Buckets[i]
@@ -128,6 +145,7 @@ func (k *Kademlia) print_kBuckets_bare(){
 		
 	}
 }
+
 
 
 
