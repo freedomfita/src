@@ -61,6 +61,12 @@ func main() {
 	    	return
 	    } else if arg_s[0] == "ping" && is_cmd_valid(arg_s,1) {
 	    	kademlia.Ping2(arg_s[1])
+	    } else if arg_s[0] == "get_contact" && is_cmd_valid(arg_s,1){
+	    		id, err := kademlia.FromString(arg_s[1])
+			if err != nil {
+				log.Fatal("Find Node: ",err)
+			}
+		    	kademlia.Find_node(id)
 	    } else if arg_s[0] == "iterativeStore" && is_cmd_valid(arg_s,2) {
 	    	k,_ := kademlia.FromString(arg_s[1])
 	    	b := []byte(arg_s[2])
