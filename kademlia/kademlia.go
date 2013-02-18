@@ -172,7 +172,8 @@ func IterativeStore(key ID, value []byte) int {
 	
 	//var closestNode kademlia.FoundNode
 	closestNode := ThisNode.ThisContact
-	
+	kClosestNodes := make(Bucket,20)
+  
 	hostPortStr := get_host_port(ThisNode.ThisContact)
 	
 	//closestnode may want to be its own function that we call from FindNode, or at least
@@ -199,13 +200,32 @@ func IterativeStore(key ID, value []byte) int {
     		log.Printf("Node 0: %v\n",res.Nodes[0])
     		nextClosestNode, dist := res.Nodes[0], key.Xor(res.Nodes[0].NodeID)
     		for i:= 0; i < len(res.Nodes); i++ {
-    			if res.Nodes[i].NodeID.Xor(key).Less(dist) && res.Nodes[i].Port != 0 {
-    				dist = res.Nodes[i].NodeID.Xor(key)
-    				nextClosestNode = res.Nodes[i]
-    			}
+    			if res.Nodes[i].Port != 0 {
+            if res.Nodes[i].NodeID.Xor(key).Less(dist) {
+              dist = res.Nodes[i].NodeID.Xor(key)
+              nextClosestNode = res.Nodes[i]
+            }
+          // update kClosestNodes
+            replace_idx := -1
+            for j := 0; j < len(kClosestNodes); j++ {
+              if kClosestNodes[j] == nil {
+                kClosestNodes[j] = res.Nodes[i].ToContactPtr()
+                replace_idx = -1
+                break
+              } else if res.Nodes[i].ToContactPtr().NodeID.Xor(key).Less(kClosestNodes[j].NodeID.Xor(key)) {
+                if replace_idx != -1 {
+                  if kClosestNodes[replace_idx].NodeID.Xor(key).Less(kClosestNodes[j].NodeID.Xor(key)) {
+                    replace_idx = j
+                  }
+                }
+              }
+            }
+            if replace_idx != -1 {
+              kClosestNodes[replace_idx] = res.Nodes[i].ToContactPtr()
+            }
+          }
     		}
     		curDistance := key.Xor(nextClosestNode.NodeID)
-    	
     		if !curDistance.Less(prevDistance) {
     			break
     		} else {
@@ -216,6 +236,15 @@ func IterativeStore(key ID, value []byte) int {
 		}
 	hostPortStr = get_host_port(closestNode)
 	store(hostPortStr, key, value)
+  // replicate data across k closest nodes
+  for i:=0; i < len(kClosestNodes); i++ {
+    if kClosestNodes[i] != nil {
+      if !kClosestNodes[i].NodeID.Equals(closestNode.NodeID) {
+        hostPortStr = get_host_port(kClosestNodes[i])
+        store(hostPortStr, key, value)
+      }
+    }
+  }
 	log.Printf("NodeID receiving STORE operation: %d\n",closestNode.NodeID)
 	return 1
 }
