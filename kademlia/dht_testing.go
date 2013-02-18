@@ -55,8 +55,11 @@ func (k *Kademlia) Local_Random_Nodes() []ID{
 func (k *Kademlia) Main_Testing(){
 
 	id_list := k.Local_Random_Nodes()
-	k.Test_Find_Nodes(id_list)
-	k.Print_KBuckets()
+	fmt.Printf("*****************\n*****************\n*****************\n")
+	fmt.Printf("%v",len(id_list))
+	//k.Test_Find_Nodes(id_list)
+	//fmt.Printf("ID_LIST\n%v\n",id_list)
+	//k.Print_KBuckets()
 
 }
 
@@ -74,9 +77,13 @@ func (k *Kademlia) Test_Find_Nodes(id_list []ID){
 		}
 		b := k_res.Nodes
 		//b := main.iterativeFindNode(id_list[i])
-		fmt.Printf("results for b found, begin printing\n")
+		//fmt.Printf("results for b%v found, begin printing\n",i)
 		for j:=0;j<len(b);j++{
-			fmt.Printf("#%v: %v\n",j,b[j])
+			//fmt.Printf("#%v: %v\n",j,b[j])
+			if b[j].Port == 0{
+				fmt.Printf("B%v has %v elements\n", i,j)
+				break
+			}
 		}
 		fmt.Printf("finished printing b results\n")
 
@@ -89,12 +96,12 @@ func (k *Kademlia) Print_KBuckets(){
 		fmt.Printf("Printing Bucket #%v\n",i)
 		kb := k.K_Buckets[i]
 		for j:=0;j<len(kb);j++{
-			if kb[j] == nil{
+			/*if kb[j] == nil{
 				fmt.Printf("Bucket #%v printed with %v elements\n",i,j)
 				break
-			} else {
-				fmt.Printf("B%v E%v :%v\n", i,j,kb[j])
-			}
+			} else {*/
+			fmt.Printf("B%v E%v :%v\n", i,j,kb[j])
+			//}
 			
 		}
 	}

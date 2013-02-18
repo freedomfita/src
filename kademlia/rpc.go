@@ -80,7 +80,7 @@ func (k *Kademlia) FindNode(req *FindNodeRequest, res *FindNodeResult) error {
 }
 
 func (k *Kademlia) Find_Closest(req_id ID, count int) []*Contact{
-	fmt.Printf("Prepare to Xor:\n|%v|\n|%v|\n", req_id, k.ThisContact.NodeID)
+	//fmt.Printf("Prepare to Xor:\n|%v|\n|%v|\n", req_id, k.ThisContact.NodeID)
 	b_num := req_id.Xor(k.ThisContact.NodeID).PrefixLen() //get bucket number
 	if b_num == 160{
 		return nil

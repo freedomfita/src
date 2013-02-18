@@ -4,7 +4,7 @@ package kademlia
 
 import (
   //"net"
-  //"fmt"
+  "fmt"
 )
 
 const NumBuckets = 160
@@ -58,7 +58,7 @@ func (bucket Bucket) FindNode(id ID) *Contact {
 
 func (kadem *Kademlia) GetBucket(dist ID) (Bucket,int) {
     // if PrefixLen == x, then 2^(160-(x+1)) <= ID < 2^(160-x), so the bucket # is (159-x)
-    bucketNum := dist.PrefixLen()
+    bucketNum := NumBuckets - (dist.PrefixLen() + 1)
     return kadem.K_Buckets[bucketNum], bucketNum
 }
 
@@ -98,18 +98,21 @@ func (k *Kademlia) Next_Open_Spot(b_num int) {
 	b := k.K_Buckets[b_num]
 	open_spot := -1
 	b_len := len(b)
+	fmt.Printf("Looking for next open spot in bucket %v\n", b_num)
 	if b[0] ==nil{
 		return
 	}
 	for i:=1;i<b_len;i++{
 		if b[i]==nil{
 			open_spot=i
+			fmt.Printf("Open spot at %v\n",i)
 			break
 		}
 	}
 	//if open_spot==-1, list is full
 	//so pop last entry(which is really the first) and shift list one spot to the right
 	if open_spot==-1{
+		fmt.Printf("Popping %v\n", b[b_len-1])
 		b[b_len-1] = nil //make last entry nil
 		//shift list
 		for i:=b_len-2;i>0;i--{
@@ -117,14 +120,17 @@ func (k *Kademlia) Next_Open_Spot(b_num int) {
 		}
 		b[0] = nil
 		
-	}
+	} else{
 	//else, shift list over one, with last entry at open_spot-1
 	//shift 0 to openspot -1 to 1 to openspot
-	for i:=open_spot-1;i>0;i--{
-		b[i+1] = b[i]
+		for i:=open_spot;i>0;i--{
+			fmt.Printf("moving %v to %v\n",i,i-1)
+			fmt.Printf("Values: %v\n %v\n",b[i],b[i-1])
+			b[i] = b[i-1]
+		}
+		b[0]=nil
+		return
 	}
-	b[0]=nil
-	return
 }
 /*
 [a][ ][ ]
