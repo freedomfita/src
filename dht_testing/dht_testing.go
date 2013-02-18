@@ -1,4 +1,4 @@
-package main
+package dht_testing
 //only populates the kbuckets randomly, not by distance, more just to check things
 import (
 	"fmt"
@@ -6,22 +6,10 @@ import (
 )
 import (
 	"kademlia"
+	"main"
 )
 const num_test_nodes = 50
 
-func (k *kademlia.Kademlia) Add_Random_Nodes(){
-	L := len(k.K_Buckets)
-	for j:=0;j<L;j++{
-		for i:=0;i<20;i++{
-			c := new(kademlia.Contact)
-			c.NodeID = kademlia.NewRandomID()
-			c.IPAddr = "192.168.0.123"
-			c.Port = 7890
-			//b_num := c.NodeID.Xor(k.ThisContact.NodeID).PrefixLen()
-			k.K_Buckets[j][i] = c
-		}
-	}
-}
 //use MoritzIP for these nodes
 func (k *kademlia.Kademlia) Random_Nodes() []kademlia.ID{
 	id_list := make([]kademlia.ID, num_test_nodes)
@@ -58,16 +46,18 @@ func (k *kademlia.Kademlia) Local_Random_Nodes() []kademlia.ID{
 //takes in id_list from Random_Nodes and runs test
 func (k *kademlia.Kademlia) Main_Testing(){
 
-	id_list := k.Local_Random_Nodes()
+	//id_list := k.Local_Random_Nodes()
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	//fmt.Printf("%v",len(id_list))
-	k.Test_Find_Nodes(id_list)
-	//fmt.Printf("ID_LIST\n%v\n",id_list)
+	//Test_Iterative_Find_Node(id_list)
+	fmt.Printf("*****************\n*****************\n*****************\n")
+	//k.Test_Find_Nodes(id_list)
+	fmt.Printf("*****************\n*****************\n*****************\n")
 	//k.Print_KBuckets()
-	k.Print_KBuckets_bare()
+	fmt.Printf("*****************\n*****************\n*****************\n")
+	//k.Print_KBuckets_bare()
 }
 
-
+//Tests find Node
 func (k *kademlia.Kademlia) Test_Find_Nodes(id_list []kademlia.ID){
 
 	for i:=0;i<len(id_list);i++{
@@ -93,6 +83,15 @@ func (k *kademlia.Kademlia) Test_Find_Nodes(id_list []kademlia.ID){
 
 	}
 
+}
+//Test Iterative find node
+
+func Test_Iterative_Find_Node(id_list []kademlia.ID){
+	num_to_test := 2
+	for i:=0;i<num_to_test;i++{
+		b := iterativeFindNode(id_list[i])
+		fmt.Printf("Bucket#%v :\n%v\n",i,b)
+	}
 }
 
 func (k *kademlia.Kademlia) Print_KBuckets(){
