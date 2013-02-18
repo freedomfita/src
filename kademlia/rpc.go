@@ -159,7 +159,7 @@ func (k *Kademlia) FindValue(req FindValueRequest, res *FindValueResult) error {
     	if key.Equals(req.Key) {
     		res.MsgID = CopyID(req.MsgID)
     		// can we just do this here, or need to Copy(val) ?
-    		res.Value = val
+    		res.Value = CopyData(val)
     		res.Nodes = nil
     		res.Err = nil
     		return nil
@@ -194,4 +194,11 @@ func FoundNode_to_Bucket(foundNodes []FoundNode) Bucket {
 			b[i].Port = foundNodes[i].Port
 	}
 	return b
+}
+
+func CopyData(data []byte) (ret []byte) {
+    for i := 0; i < len(data); i++ {
+        ret[i] = data[i]
+    }
+    return
 }
