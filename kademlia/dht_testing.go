@@ -36,7 +36,7 @@ func (k *Kademlia) Local_Random_Nodes() []ID{
 		c:= new(Contact)
 		c.NodeID = NewRandomID()
 		id_list[i] = c.NodeID
-		c.IPAddr = "192.168.0.123"
+		c.IPAddr = "localhost"
 		c.Port = 7890
 		b_num := c.NodeID.Xor(k.ThisContact.NodeID).PrefixLen()
 		k.Next_Open_Spot(b_num)
