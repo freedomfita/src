@@ -56,6 +56,22 @@ func main() {
 	    	continue
 	    } else if arg_s[0] == "q" {
 	    	return
+	    } else if arg_s[0] == "t" {
+	    	fmt.Printf("Kademlia starting up!\n")
+	    	thisNode = kademlia.NewKademlia()
+	    	    
+	    	//Register on server
+	    	rpc.Register(thisNode)
+	    	rpc.HandleHTTP()
+	    	l, err := net.Listen("tcp", "localhost:7890")
+	    	if err != nil {
+	    		log.Fatal("Listen: ", err)
+	    	}
+	    	
+	    	// Serve forever.
+	    	go http.Serve(l, nil)
+		running = true
+	    	thisNode.Main_Testing()
 	    } else if arg_s[0] == "run" && is_cmd_valid(arg_s,2,false) {
 	    	run(arg_s[1],arg_s[2])
 	    } else if arg_s[0] == "ping" && is_cmd_valid(arg_s,1,true) {
