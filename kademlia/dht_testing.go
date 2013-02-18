@@ -78,7 +78,7 @@ func (k *Kademlia) Test_Find_Nodes(id_list []ID){
 			fmt.Printf("#%v: %v\n",j,b[j])
 		}
 		fmt.Printf("finished printing b results\n")
-		break
+
 	}
 
 }

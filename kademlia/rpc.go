@@ -80,8 +80,11 @@ func (k *Kademlia) FindNode(req *FindNodeRequest, res *FindNodeResult) error {
 }
 
 func (k *Kademlia) Find_Closest(req_id ID, count int) []*Contact{
+	fmt.Printf("Prepare to Xor:\n|%v|\n|%v|\n", req_id, k.ThisContact.NodeID)
 	b_num := req_id.Xor(k.ThisContact.NodeID).PrefixLen() //get bucket number
-	b_num--
+	if b_num == 160{
+		return nil
+	}
 	fmt.Printf("tried to access bucket %d\n",b_num)
 	b := k.K_Buckets[b_num] //get corresponding bucket
 	nodes := make([]*Contact, count)  //make node array
