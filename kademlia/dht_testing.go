@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-const num_test_nodes = 50
+const num_test_nodes = 150
 
 //use MoritzIP for these nodes
 func (k *Kademlia) Random_Nodes() []ID{
@@ -48,16 +48,16 @@ func Main_Testing(k *Kademlia){
 	fmt.Printf("*****************\n*****************\n*****************\n")
 	Test_Iterative_Find_Node(id_list)
 	fmt.Printf("*****************\n*****************\n*****************\n")
-	//k.Test_Find_Nodes(id_list)
+	k.Test_Find_Nodes(id_list)
 	fmt.Printf("*****************\n*****************\n*****************\n")
 	//k.Print_KBuckets()
-	fmt.Printf("*****************\n*****************\n*****************\n")
-	k.Print_KBuckets_bare()
 	fmt.Printf("*****************\n*****************\n*****************\n")
 	id_key_list := Test_Iterative_Store()
 	fmt.Printf("*****************\n*****************\n*****************\n")
 	Test_Iterative_Find_Value(id_key_list)
 	fmt.Printf("*****************\n*****************\n*****************\n")
+	k.Print_KBuckets_bare()
+  fmt.Printf("*****************\n*****************\n*****************\n")
 }
 
 //Tests find Node

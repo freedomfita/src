@@ -317,10 +317,10 @@ func IterativeFindValue(key ID) int {
 
 	// check if this node has the value
 	if ThisNode.Data[key] != nil {
-		log.Printf("%v %v\n", ThisNode.ThisContact.IPAddr, ThisNode.Data[key])
+		log.Printf("%v %v\n", ThisNode.ThisContact.NodeID, ThisNode.Data[key])
 		return 0
 	}
-
+  // if this node doesn't have the value, search among the known nodes
 	const alpha = 3
 	
 	contacted_nodes := make(Bucket,1600)
@@ -355,7 +355,6 @@ func IterativeFindValue(key ID) int {
 	// shortlist. Each contact, if it is live, should normally return k triples. If any of the 
 	// alpha contacts fails to reply, it is removed from the shortlist, at least temporarily.
 	
-		// TODO: this isn't parallel yet.
 		new_shortlist := make(Bucket,400)
 		for i := 0; i < len(shortlist); i++ {
 			next_open_spot(contacted_nodes)
@@ -365,9 +364,8 @@ func IterativeFindValue(key ID) int {
 		
 				client, err := rpc.DialHTTP("tcp", hostPortStr)
 				if err != nil {
-					// TODO: this definitely shouldn't be a fatal error, it should just go on to the next node
-					log.Printf("3\n")
-					log.Printf("DialHTTP: %e\n", err)
+					// remove from shortlist
+          /// XXXXXXXXXXXXXXXXXXXX
 				} else {
 					req := new(FindValueRequest)
 					req.MsgID = NewRandomID()
@@ -381,7 +379,8 @@ func IterativeFindValue(key ID) int {
           client.Close()
     				// if res.Err is nil, the node contains the value
     				if res.Err == nil {
-    					log.Printf("%v %v\n", shortlist[i].IPAddr, res.Value)
+              log.Printf("OK\n")
+    					log.Printf("FindValue: %v %v\n", shortlist[i].NodeID, res.Value)
     					return 0
     				} else {
     					offset:= 20 * i

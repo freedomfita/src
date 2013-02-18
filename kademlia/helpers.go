@@ -39,6 +39,7 @@ func foundNodeArr_to_Bucket(foundNodes []FoundNode) Bucket {
 }
 
 func copyData(data []byte) (ret []byte) {
+  ret = make([]byte,len(data))
     for i := 0; i < len(data); i++ {
         ret[i] = data[i]
     }
