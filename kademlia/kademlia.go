@@ -383,7 +383,7 @@ returned the value. If you do not find a value, print "ERR".
 func iterativeFindValue(key kademlia.ID) int {
 
 	// check if this node has the value
-	if thisNode.Data[key] {
+	if thisNode.Data[key] == nil{
 		log.Printf("%v %v\n", thisNode.ThisContact.IPAddr, thisNode.Data[key])
 		return 0
 	}
