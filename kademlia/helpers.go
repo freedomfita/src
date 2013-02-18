@@ -1,7 +1,6 @@
 package kademlia
 
 import (
-  "fmt"
   "strings"
   "strconv"
   "sort"

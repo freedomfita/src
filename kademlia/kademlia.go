@@ -96,7 +96,6 @@ func Ping2(nodeToPing string) *Contact {
     client.Close()
     log.Printf("ping msgID: %s\n", ping.MsgID.AsString())
     log.Printf("pong msgID: %s\n", pong.MsgID.AsString())
-    //fmt.Printf("%s\n",pong.Sender.NodeID.AsString())
   sender := new(Contact)
   sender.NodeID = pong.Sender.NodeID
   sender.IPAddr = pong.Sender.IPAddr
@@ -167,7 +166,7 @@ func Get_local_value(key ID) int {
     return 0
 
 }
-func Get_node_id() int {
+func Whoami() int {
 	log.Printf("Node ID of this node: %s\n",ThisNode.ThisContact.NodeID.AsString())
 	//log.Printf("IP/Port: %v %v\n",ThisNode.ThisContact.IPAddr,ThisNode.ThisContact.Port)
 	return 0
@@ -256,8 +255,7 @@ func IterativeStore(key ID, value []byte) int {
       }
     }
   }
-	//log.Printf("NodeID receiving STORE operation: %d\n",closestNode.NodeID)
-	fmt.Printf("\n")
+	log.Printf("%v\n",closestNode.NodeID)
 	return 1
 }
 
@@ -279,19 +277,20 @@ func IterativeFindNode(id ID) Bucket {
 	if err != nil {
 		log.Fatal("Call: ", err)
     	}
-	//initialize array to hold all 20^2 contacts, which we'll sort later
-	big_arr := make(Bucket, 400)
-
+	//initialize array to hold all 20+20^2 contacts, which we'll sort later
+	big_arr := make(Bucket, 420)
+  for j := 0; j<len(k_closest); j++{
+    big_arr[400+j] = k_closest[j]
+  }
 	for i :=0;i<len(k_closest);i++{
 		//find 20 closest for each node.
 		if k_closest[i] == nil {
-			
+			// do nothing
 		} else if k_closest[i].Port != 0 {
 			hostPortStr := get_host_port(k_closest[i])
 			//log.Printf("Host/Port: %s\n",hostPortStr)
 			client, err := rpc.DialHTTP("tcp", hostPortStr)
 			if err != nil {
-				log.Printf("2\n")
 				log.Fatal("DialHTTP: ", err)
 			}
 			req := new(FindNodeRequest)
@@ -315,9 +314,8 @@ func IterativeFindNode(id ID) Bucket {
 		}
 		
 	}
-	//fmt.Printf("Finished IterativeFindNode and returning array of contacts\n")
 	// print slice of <= k closest NodeIDs
-	//fmt.Printf("%v\n",kademlia.Sort_Contacts(big_arr)[:20])
+	fmt.Printf("%v\n",sort_contacts(big_arr)[:20])
 	return (sort_contacts(big_arr))
 }
 
@@ -376,8 +374,8 @@ func IterativeFindValue(key ID) int {
 		
 				client, err := rpc.DialHTTP("tcp", hostPortStr)
 				if err != nil {
-					// remove from shortlist
-          /// XXXXXXXXXXXXXXXXXXXX
+          // if we can't contact the node, remove it from shortlist
+          shortlist[i] = nil
 				} else {
 					req := new(FindValueRequest)
 					req.MsgID = NewRandomID()
@@ -499,7 +497,7 @@ func Run(listenStr string, firstPeerStr string) int {
 	//fmt.Printf("Made it through iterativeFindNode\n")
 	for i := 0; i < len(closestContacts); i++ {
 		if closestContacts[i] != nil {
-			//fmt.Printf("contact: %v\n",closestContacts[i])
+			fmt.Printf("contact: %v\n",closestContacts[i])
 			ThisNode.addContactToBuckets(closestContacts[i])
 		}
 	}

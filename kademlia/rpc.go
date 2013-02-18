@@ -5,6 +5,8 @@ package kademlia
 
 import (
 	"errors"
+  "fmt"
+  "log"
 )
 
 // PING
@@ -42,7 +44,8 @@ type StoreResult struct {
 func (k *Kademlia) Store(req StoreRequest, res *StoreResult) error {
 	res.MsgID = CopyID(req.MsgID)
 	k.Data[req.Key] = req.Value
-    return nil
+  fmt.Printf("\n")
+  return nil
 }
 
 
@@ -82,8 +85,8 @@ func (k *Kademlia) FindNode(req *FindNodeRequest, res *FindNodeResult) error {
     //populate res.Nodes (array of FoundNodes)
     res.MsgID = CopyID(req.MsgID)
     res.Nodes = bucket_to_FoundNodeArr(k.find_closest(req.NodeID, 20)) //no idea if that should be 20 or not
-    //May need to change this, haven't tested it, but we could have to add each entry to
-    //res.Nodes in a for loop after returning the array of Contacts, but we'll see
+    // print list of nodes
+    log.Printf("%v\n",res.Nodes)
     return nil
 }
 
@@ -111,11 +114,13 @@ func (k *Kademlia) FindValue(req FindValueRequest, res *FindValueResult) error {
     		res.Value = copyData(val)
     		res.Nodes = nil
     		res.Err = nil
+        log.Printf("%v\n",res.Value)
     		return nil
     	}
     }
     res.Value = nil
     res.Nodes = bucket_to_FoundNodeArr(k.find_closest(k.ThisContact.NodeID,20))
+    log.Printf("%v\n",res.Nodes)
     res.Err = errors.New("Value not found")
     return nil
 }

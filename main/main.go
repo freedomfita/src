@@ -1,8 +1,8 @@
 package main
 
 import (
-    //"flag"
-    "fmt"
+    "flag"
+    //"fmt"
     "log"
     "math/rand"
     //"net"
@@ -26,7 +26,7 @@ func main() {
     // generate the same sequence of IDs.
     rand.Seed(time.Now().UnixNano())
 	    // Get the bind and connect connection strings from command-line arguments.
-    /*
+    
     flag.Parse()
     args := flag.Args()
     if len(args) != 2 {
@@ -35,9 +35,9 @@ func main() {
     listenStr := args[0]
     firstPeerStr := args[1]
     kademlia.Run(listenStr,firstPeerStr)
-    */
+    /*
     log.Printf("\nType q to quit\nFormat of Run\nrun str str")
-    
+    */
     
     for true {
 	    reader := bufio.NewReader(os.Stdin)
@@ -50,7 +50,6 @@ func main() {
 	    	*/
 	    
 	    arg_s := strings.Split(input, " ")
-	    length := len(arg_s)
 	    /*log.Printf("there were %d\n", length)
 	    for i := 0; i < length; i++ {
 	    	log.Printf("number %d: %s", i, arg_s[i])
@@ -60,42 +59,31 @@ func main() {
 	    	continue
 	    } else if arg_s[0] == "q" {
 	    	return
-	    } else if arg_s[0] == "t" {
-	    	fmt.Printf("Kademlia starting up!\n")
-	    	kademlia.ThisNode = kademlia.NewKademlia()
-	    	    
-	    	//Register on server
-	    	kademlia.Run("localhost:7890","localhost:7890")
-        
-	    	kademlia.Main_Testing(kademlia.ThisNode)
-        
-	    } else if arg_s[0] == "run" && is_cmd_valid(arg_s,2) {
-	    	kademlia.Run(arg_s[1],arg_s[2])
 	    } else if arg_s[0] == "ping" && is_cmd_valid(arg_s,1) {
 	    	kademlia.Ping2(arg_s[1])
-	    } else if arg_s[0] == "store" && is_cmd_valid(arg_s,2) {
+	    } else if arg_s[0] == "iterativeStore" && is_cmd_valid(arg_s,2) {
 	    	k,_ := kademlia.FromString(arg_s[1])
 	    	b := []byte(arg_s[2])
 	    	kademlia.IterativeStore(k,b)
-	    } else if arg_s[0] == "find_node" && is_cmd_valid(arg_s,1) {
+	    } else if arg_s[0] == "iterativeFindNode" && is_cmd_valid(arg_s,1) {
 	    	    	id, err := kademlia.FromString(arg_s[1])
 		    	if err != nil {
 		    		log.Fatal("Find Node: ",err)
 		    	}
-		    	kademlia.Find_node(id)
+		    	kademlia.IterativeFindNode(id)
 
-	    } else if arg_s[0] == "find_value" && is_cmd_valid(arg_s,1) {
+	    } else if arg_s[0] == "iterativeFindValue" && is_cmd_valid(arg_s,1) {
 	    	k,_ := kademlia.FromString(arg_s[1])
 	    	kademlia.IterativeFindValue(k)
-	    } else if arg_s[0] == "get_local_value" && is_cmd_valid(arg_s,1) {
+	    } else if arg_s[0] == "local_find_value" && is_cmd_valid(arg_s,1) {
 	    	    	id, err := kademlia.FromString(arg_s[1])
 		    	if err != nil {
 		    		log.Fatal("Get Local Value: ",err)
 		    	}
 		    	kademlia.Get_local_value(id)
 
-	    } else if arg_s[0] == "get_node_id" && is_cmd_valid(arg_s,0) {
-	    	kademlia.Get_node_id()
+	    } else if arg_s[0] == "whoami" && is_cmd_valid(arg_s,0) {
+	    	kademlia.Whoami()
 	    } else {
 	    	log.Printf("Command/s unknown.")
 	    }
