@@ -381,7 +381,7 @@ func IterativeFindValue(key ID) int {
     				// if res.Err is nil, the node contains the value
     				if res.Err == nil {
               				//log.Printf("OK\n")
-    					log.Printf("FindValue: %v %v\n", shortlist[i].NodeID, res.Value)
+    					log.Printf("%v %v\n", shortlist[i].NodeID, res.Value)
     					return 0
     				} else {
     					offset:= 20 * i
