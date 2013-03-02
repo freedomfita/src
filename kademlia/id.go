@@ -4,6 +4,7 @@ package kademlia
 import (
     "encoding/hex"
     "math/rand"
+    "log"
 )
 
 
@@ -11,6 +12,16 @@ import (
 // methods.
 const IDBytes = 20
 type ID [IDBytes]byte
+
+func FromByteArray(arr []byte) (id ID) {
+    if len(arr) != IDBytes {
+        log.Fatal("In FromByteArray([]byte): length of byte array not equal to const IDBytes")
+    }
+    for i := 0; i < IDBytes; i++ {
+        id[i] = arr[i]
+    }
+    return id
+}
 
 func (id ID) AsString() string {
     return hex.EncodeToString(id[0:IDBytes])

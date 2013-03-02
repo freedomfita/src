@@ -3,14 +3,14 @@ package kademlia
 // as a receiver for the RPC methods, which is required by that package.
 
 import (
-  //"net"
-  "fmt"
-  "log"
-  "net"
-  "net/http"
-  "net/rpc"
-  "strings"
-  "strconv"
+    //"net"
+    "fmt"
+    "log"
+    "net"
+    "net/http"
+    "net/rpc"
+    "strings"
+    "strconv"
 )
 
 const NumBuckets = 160
@@ -27,9 +27,12 @@ type Contact struct {
 
 // Core Kademlia type. You can put whatever state you want in this.
 type Kademlia struct {
-  ThisContact *Contact
-  K_Buckets []Bucket
-  Data map[ID]([]byte)
+    ThisContact *Contact
+    K_Buckets []Bucket
+    Data map[ID]([]byte)
+    // stuff for p2p
+    ShareDir string
+    FileHeaders map[ID](FileHeader)
 }
 
 func NewKademlia() *Kademlia {
@@ -500,8 +503,8 @@ func Run(listenStr string, firstPeerStr string) int {
 			ThisNode.addContactToBuckets(closestContacts[i])
 		}
 	}
-	//id_list := kademlia.ThisNode.Local_Random_Nodes()
-	//fmt.Printf("Made it through, have %d random nodes now in our buckets\n", len(id_list))
+	// initialize the p2p functionality
+    InitP2P(ThisNode)
 	return 1
   
 }
