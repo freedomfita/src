@@ -3,12 +3,12 @@ package kademlia
 import (
     "os"
     "log"
+    "fmt"
+    "strings"
 )
 
 var gShareDirectory string = "../../sharing"
 
-//! @todo: we shouldn't really be keeping all of the packets in memory as this is too expensive. 
-/// Instead, we should load them when a request is made for the file
 func InitP2P(localNode *Kademlia) {
     
     localNode.ShareDir = gShareDirectory
@@ -26,25 +26,84 @@ func InitP2P(localNode *Kademlia) {
         if fi.IsDir() {
             //! @todo: do some sort of error handling here
             log.Printf("Warning: directory encountered within share directory. Sharing of directories is not currently supported.")
+        } else if fi.Name()[0] == 0x2e {
+            log.Printf("Ignoring special file %v\n",fi.Name())
         } else {
             var fh FileHeader
             
             fh.FileName = fi.Name()
             fh.FilePath = localNode.ShareDir + "/" + fi.Name()
-            fh.Complete = true
-            fh.Info.FileSize = int(fi.Size())
-            // split the file represented by fh into packets, which are (currently) stored in process memory only
-            fh.LoadPackets()
-            
-            fh.Info.FileID = sha1hash(fh.FileName)
-            fh.Info.PacketIDs = make([]ID,len(fh.Packets))
-            
-            for p := 0; p < len(fh.Packets); p++ {
-                // generate a packet ID for each packet based on its SHA 1 hash
-                fh.Info.PacketIDs[p] = fh.Packets[p].sha1hash()
+            fh.Info.Complete = true
+            fh.Info.FileSize = fi.Size()
+            // split the file represented by fh into persistent packets, if this has not already happened
+            if !fh.PacketsExist() {
+                fh.MakePackets()
             }
+            //! @todo: we need to load the packets when a request for the associated File Header is made
+            fh.PacketsLoaded = false
+            fh.Info.FileID = sha1hash(fh.FileName)
+            
             // add the file header to the list of file headers
             localNode.FileHeaders[fh.Info.FileID] = fh
+            localNode.Data[fh.Info.FileID] = fh.Info.Serialize()
         }
     }
+}
+
+func DownloadFile(fname string) {
+    // calculate file ID
+    fid := sha1hash(fname)
+    // get the file header
+    result := IterativeFindValue(fid)
+    var fi FileInfo
+    fi.Deserialize(result)
+    if result == nil {
+        fmt.Printf("Error: could not find file associated with key %v\n",fid)
+        return
+    }
+    fi.Complete = false
+    var fh FileHeader
+    fh.FileName = fname
+    fh.FilePath = gShareDirectory + "/" + fname
+    nameparts := strings.Split(fname, ".")
+    fh.PacketDir = gShareDirectory + "/" + strings.Join(nameparts[:len(nameparts)-1],"")
+    fh.Info = fi
+    // load existing packets
+    
+    doneChannel := make(chan int, len(fi.PacketIDs))
+    for pIdx := 0; pIdx < len(fi.PacketIDs); pIdx++ {
+        pid := fi.PacketIDs[pIdx]
+        go GetPacket(fh,pid,doneChannel,pIdx)
+    }
+    // clear the channel
+    for i := 0; i < len(fi.PacketIDs); i++ {
+        <- doneChannel
+    }
+    // at this point, all the GetPacket goroutines will have finished downloading
+    fh.JoinPackets()
+    fh.Info.Complete = true
+    fmt.Printf("File with key %v downloaded successfully.\n",fid)
+    return
+}
+
+func GetPacket(fh FileHeader, packetID ID, doneChannel chan int,pnum int) {
+    // first, we check if we already have the packet
+    if _,ok := fh.Packets[packetID]; ok {
+        doneChannel <- 1
+        return
+    }
+    // if we don't have the packet, get it from the network
+    packetData := IterativeFindValue(packetID)
+    // deserialize the raw byte stream
+    var packet Packet
+    packet.Deserialize(packetData)
+    if packet.PacketID != packetID {
+        log.Fatal("ERROR: Packet IDs do not match.\n")
+    }
+    // add packet to the map in the file header
+    fh.Packets[packetID] = packet
+    // write the packet to disk
+    packet.Write(fh.PacketDir,pnum)
+    // signal the channel when we are done downloading
+    doneChannel <- 1
 }

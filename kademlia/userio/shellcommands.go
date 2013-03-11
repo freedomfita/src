@@ -55,3 +55,7 @@ func do_local_findvalue(argv []string) {
 func do_whoami(argv []string) {
     kademlia.Whoami()
 }
+
+func do_download(argv []string) {
+    kademlia.DownloadFile(argv[1])
+}

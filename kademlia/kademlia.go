@@ -326,12 +326,12 @@ func IterativeFindNode(id ID) Bucket {
 printf("%v %v\n", ID, value), where ID refers to the node that finally
 returned the value. If you do not find a value, print "ERR".
 */
-func IterativeFindValue(key ID) int {
+func IterativeFindValue(key ID) []byte {
 
 	// check if this node has the value
 	if ThisNode.Data[key] != nil {
 		fmt.Printf("%v %v\n", ThisNode.ThisContact.NodeID, ThisNode.Data[key])
-		return 0
+		return ThisNode.Data[key]
 	}
   // if this node doesn't have the value, search among the known nodes
 	const alpha = 3
@@ -394,7 +394,7 @@ func IterativeFindValue(key ID) int {
     				if res.Err == nil {
               				//fmt.Printf("OK\n")
     					fmt.Printf("%v %v\n", shortlist[i].NodeID, res.Value)
-    					return 0
+    					return res.Value
     				} else {
     					offset:= 20 * i
     					resBucket := foundNodeArr_to_Bucket(res.Nodes)
@@ -416,11 +416,11 @@ func IterativeFindValue(key ID) int {
     	}
     		if shortlist_size == 0 {
     			fmt.Printf("ERR\n")
-    			return 1
+    			return nil
     		}
     	}
     }
-    return 0
+    return nil
 }
 
 func (k *Kademlia) find_closest(req_id ID, count int) []*Contact{
