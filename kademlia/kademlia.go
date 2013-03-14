@@ -106,6 +106,25 @@ func Ping2(nodeToPing string) *Contact {
 	return sender
 }
 
+func authenticate(hostAndPort string, key ID, data []byte) int {
+	client, err := rpc.DialHTTP("tcp", hostAndPort)
+		if err != nil {
+			log.Fatal("DialHTTP: ", err)
+    }
+    
+    	req := new(AuthRequest)
+    	req.MsgID = ThisNode.ThisContact.NodeID
+    	
+    	var res AuthResult
+        err = client.Call("Kademlia.Authenticate", req, &res)
+        client.Close()
+    	if err != nil {
+    	//Maybe change to not fatal, rather a fail
+        log.Fatal("Call: ", err)
+    	}
+	return res.isFriend
+}
+
 func store(hostAndPort string, key ID, data []byte) int {
 	client, err := rpc.DialHTTP("tcp", hostAndPort)
 	if err != nil {

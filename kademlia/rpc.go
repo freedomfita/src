@@ -27,6 +27,14 @@ func (k *Kademlia) Ping(ping Ping, pong *Pong) error {
     return nil
 }
 
+type AuthRequest struct {
+	MsgID ID
+}
+
+type AuthResult struct {
+	MsgID ID
+	isFriend int //0 on rejection, 1 on success
+}
 
 // STORE
 type StoreRequest struct {
