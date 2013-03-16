@@ -24,3 +24,7 @@ func (k *Kademlia) Release_Lock(req UnlockRequest, *res UnlockResult) error {
 	//call function to re-download file
 
 }
+
+func (k *Kademlia) update_file(file_id ID) {
+	
+}
