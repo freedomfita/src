@@ -27,6 +27,27 @@ func (k *Kademlia) Ping(ping Ping, pong *Pong) error {
     return nil
 }
 
+//LOCKING/RELEASING
+type LockRequest struct {
+	MsgID ID
+	FileID ID
+}
+
+type LockResult struct {
+	MsgID ID
+	is_locked int
+}
+
+type UnlockRequest struct {
+	MsgID ID
+	FileID ID
+}
+
+type UnlockResult struct {
+	MsgID ID
+}
+
+//AUTHENTICATE
 type AuthRequest struct {
 	MsgID ID
 }

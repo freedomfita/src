@@ -14,11 +14,14 @@ type UserGroup struct {
     access map[User]int
 }
 
+
 func (k *Kademlia) Authenticate(req AuthRequest, *res AuthResult) error {
 	res.MsgID = CopyID(req.MsgID)
 	//Now run function to test whether or not we have node in F_Buckets
 	res.isFriend = k.find_friend(req.MsgID)
 }
+
+
 
 func (k *Kademlia) find_friend(req_id ID) int{
 	//fmt.Printf("Prepare to Xor:\n|%v|\n|%v|\n", req_id, k.ThisContact.NodeID)

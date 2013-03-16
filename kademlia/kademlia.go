@@ -33,6 +33,7 @@ type Kademlia struct {
     Data map[ID]([]byte)
     // stuff for p2p
     ShareDir string
+    Lock_Acquired ID //this will be the FileID, if no lock, null
     FileHeaders map[ID](FileHeader)
 }
 
@@ -109,11 +110,11 @@ func Ping2(nodeToPing string) *Contact {
 	return sender
 }
 
-func authenticate(hostAndPort string, key ID, data []byte) int {
+func authenticate(hostAndPort string) int {
 	client, err := rpc.DialHTTP("tcp", hostAndPort)
-		if err != nil {
-			log.Fatal("DialHTTP: ", err)
-    }
+	if err != nil {
+		log.Fatal("DialHTTP: ", err)
+    	}
     
     	req := new(AuthRequest)
     	req.MsgID = ThisNode.ThisContact.NodeID
@@ -122,10 +123,50 @@ func authenticate(hostAndPort string, key ID, data []byte) int {
         err = client.Call("Kademlia.Authenticate", req, &res)
         client.Close()
     	if err != nil {
+    		//Maybe change to not fatal, rather a fail
+        	log.Fatal("Call: ", err)
+    	}
+	return res.isFriend
+}
+
+func acquire_lock(hostAndPort string, FileID ID) int {
+	client, err := rpc.DialHTTP("tcp", hostAndPort)
+	if err != nil {
+		log.Fatal("DialHTTP: ", err)
+    	}
+    
+    	req := new(LockRequest)
+    	req.MsgID = ThisNode.ThisContact.NodeID
+    	req.FileID = FileID
+    	
+    	var res LockResult
+        err = client.Call("Kademlia.Acquire_Lock", req, &res)
+        client.Close()
+    	if err != nil {
     	//Maybe change to not fatal, rather a fail
         log.Fatal("Call: ", err)
     	}
-	return res.isFriend
+	return res.is_locked
+}
+
+func release_lock(hostAndPort string, FileID ID) int {
+	client, err := rpc.DialHTTP("tcp", hostAndPort)
+	if err != nil {
+		log.Fatal("DialHTTP: ", err)
+	    }
+	    
+	req := new(LockRequest)
+	req.MsgID = ThisNode.ThisContact.NodeID
+	req.FileID = FileID
+	    	
+	var res LockResult
+	err = client.Call("Kademlia.Acquire_Lock", req, &res)
+	client.Close()
+	if err != nil {
+	    	//Maybe change to not fatal, rather a fail
+	        log.Fatal("Call: ", err)
+    	}
+	return 0
 }
 
 func store(hostAndPort string, key ID, data []byte) int {
