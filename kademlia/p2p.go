@@ -7,12 +7,24 @@ import (
     "strings"
 )
 
-var gShareDirectory string = "../../sharing"
+//! TODO: allow user to set these, and set dynamically on run
+var gShareDirectory string = "/Users/MoritzGellner/Desktop/Projects/Kademlia_DHT/Kademlia/sharing"
+var gDataDirectory string = "/Users/MoritzGellner/Desktop/Projects/Kademlia_DHT/Kademlia/packets"
+
+var DIRFLAGS = os.ModeDir | 0x1ff
 
 func InitP2P(localNode *Kademlia) {
     
-    localNode.ShareDir = gShareDirectory
-    dir,err := os.Open(localNode.ShareDir)
+    ThisNode.FileHeaders = make(map[ID]FileHeader,1000)
+    LoadDir(gShareDirectory)
+}
+
+func LoadDir(directory string) (ret Directory) {
+    truncatedName := strings.SplitAfter(directory,gShareDirectory)[1]+"/"
+    ret.Info.DirName = truncatedName
+    ret.Info.DirID = sha1hash(truncatedName)
+    
+    dir,err := os.Open(directory)
     if err != nil {
         log.Fatal("Open: ", err)
     }
@@ -20,54 +32,63 @@ func InitP2P(localNode *Kademlia) {
     if err != nil {
         log.Fatal("Readdir: ", err)
     }
-    localNode.FileHeaders = make(map[ID]FileHeader,len(f_infos))
     for i := 0; i < len(f_infos); i++ {
         fi := f_infos[i]
         if fi.IsDir() {
-            //! @todo: do some sort of error handling here
-            log.Printf("Warning: directory encountered within share directory. Sharing of directories is not currently supported.")
+            childdir := LoadDir(directory+"/"+fi.Name())
+            ret.ChildDirs = append(ret.ChildDirs,childdir.Info)
         } else if fi.Name()[0] == 0x2e {
             log.Printf("Ignoring special file %v\n",fi.Name())
         } else {
-            var fh FileHeader
-            
-            fh.FileName = fi.Name()
-            fh.FilePath = localNode.ShareDir + "/" + fi.Name()
-            fh.Info.Complete = true
-            fh.Info.FileSize = fi.Size()
-            // split the file represented by fh into persistent packets, if this has not already happened
-            if !fh.PacketsExist() {
-                fh.MakePackets()
-            }
-            //! @todo: we need to load the packets when a request for the associated File Header is made
-            fh.PacketsLoaded = false
-            fh.Info.FileID = sha1hash(fh.FileName)
-            
-            // add the file header to the list of file headers
-            localNode.FileHeaders[fh.Info.FileID] = fh
-            localNode.Data[fh.Info.FileID] = fh.Info.Serialize()
+            LoadFile(fi,&ret)
         }
     }
+    ThisNode.Data[ret.Info.DirID] = ret.Serialize()
+    return ret
 }
 
-func DownloadFile(fname string) {
+func LoadFile(fi os.FileInfo, dir *Directory) {
+    
+    var fh FileHeader
+    
+    fh.Info.FileName = fi.Name()
+    fh.FilePath = dir.Info.DirName + fi.Name()
+    fh.Info.Complete = true
+    fh.Info.FileSize = fi.Size()
+    // split the file represented by fh into persistent packets, if this has not already happened
+    if !fh.PacketsExist() {
+        fh.MakePackets()
+    }
+    
+    fh.PacketsLoaded = false
+    fh.Info.FileID = sha1hash(fh.Info.FileName)
+    
+    // add the file header to the list of file headers
+    ThisNode.FileHeaders[fh.Info.FileID] = fh
+    ThisNode.Data[fh.Info.FileID] = fh.Info.Serialize()
+    dir.Files = append(dir.Files,fh.Info)
+}
+
+func DownloadFile(fname string, dest string) {
     // calculate file ID
     fid := sha1hash(fname)
     // get the file header
     result := IterativeFindValue(fid)
     var fi FileInfo
-    fi.Deserialize(result)
     if result == nil {
         fmt.Printf("Error: could not find file associated with key %v\n",fid)
         return
     }
+    fi.Deserialize(result)
+    
     fi.Complete = false
     var fh FileHeader
-    fh.FileName = fname
+    fh.Info.FileName = fname
     fh.FilePath = gShareDirectory + "/" + fname
     nameparts := strings.Split(fname, ".")
-    fh.PacketDir = gShareDirectory + "/" + strings.Join(nameparts[:len(nameparts)-1],"")
+    fh.PacketDir = gDataDirectory + "/" + strings.Join(nameparts[:len(nameparts)-1],"")
     fh.Info = fi
+    
     // load existing packets
     
     doneChannel := make(chan int, len(fi.PacketIDs))
@@ -80,10 +101,36 @@ func DownloadFile(fname string) {
         <- doneChannel
     }
     // at this point, all the GetPacket goroutines will have finished downloading
-    fh.JoinPackets()
+    fh.JoinPackets(dest)
     fh.Info.Complete = true
     fmt.Printf("File with key %v downloaded successfully.\n",fid)
+    
     return
+}
+
+func DownloadDirectory(dirname string, dest string) {
+    dirid := sha1hash(dirname)
+    result := IterativeFindValue(dirid)
+    var dir Directory
+    if result == nil {
+        fmt.Printf("Error: could not find directory associated with key %v\n",dirid)
+        return
+    }
+    dir.Deserialize(result)
+    
+    os.Mkdir(dest+dirname,DIRFLAGS)
+    
+    for fi := 0; fi < len(dir.Files); fi++ {
+        curFile := dir.Files[fi]
+        DownloadFile(curFile.FileName,dest+dirname)
+    }
+    
+    for di := 0; di < len(dir.ChildDirs); di++ {
+        curChild := dir.ChildDirs[di].DirName
+        DownloadDirectory(curChild,dest)
+    }
+    fmt.Printf("Directory with key %v downloaded successfully.\n",dirid)
+    
 }
 
 func GetPacket(fh FileHeader, packetID ID, doneChannel chan int,pnum int) {

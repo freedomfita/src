@@ -57,5 +57,10 @@ func do_whoami(argv []string) {
 }
 
 func do_download(argv []string) {
-    kademlia.DownloadFile(argv[1])
+    log.Fatal("TODO")
+    kademlia.DownloadFile(argv[1],"")
+}
+
+func do_download_dir(argv []string) {
+    kademlia.DownloadDirectory(argv[1],argv[2])
 }

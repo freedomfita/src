@@ -37,7 +37,8 @@ func MainLoop() {
     gCmdMap["iterativeFindValue"] = Command{ "iterativeFindValue",1,do_iterative_findvalue }
     gCmdMap["local_find_value"] = Command{ "local_find_value",1,do_local_findvalue }
     gCmdMap["whoami"] = Command{ "whoami",0,do_whoami }
-    gCmdMap["download"] = Command{ "download",1,do_download }
+    gCmdMap["download_file"] = Command{ "download_file",1,do_download }
+    gCmdMap["download_dir"] = Command{ "download_dir",2,do_download_dir }
     
     var listenStr,firstPeerStr string
     // By default, Go seeds its RNG with 1. This would cause every program to

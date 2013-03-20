@@ -321,7 +321,7 @@ func IterativeStore(key ID, value []byte) int {
       }
     }
   }
-	fmt.Printf("%v\n",closestNode.NodeID)
+	//fmt.Printf("%v\n",closestNode.NodeID)
 	return 1
 }
 
@@ -381,7 +381,7 @@ func IterativeFindNode(id ID) Bucket {
 		
 	}
 	// print slice of <= k closest NodeIDs
-	fmt.Printf("%v\n",bucket_to_FoundNodeArr(sort_contacts(big_arr)[:20]))
+	//fmt.Printf("%v\n",bucket_to_FoundNodeArr(sort_contacts(big_arr)[:20]))
 	return (sort_contacts(big_arr)[:20])
 }
 
@@ -393,7 +393,7 @@ func IterativeFindValue(key ID) []byte {
 
 	// check if this node has the value
 	if ThisNode.Data[key] != nil {
-		fmt.Printf("%v %v\n", ThisNode.ThisContact.NodeID, ThisNode.Data[key])
+		//fmt.Printf("%v %v\n", ThisNode.ThisContact.NodeID, ThisNode.Data[key])
 		return ThisNode.Data[key]
 	}
   // if this node doesn't have the value, search among the known nodes
@@ -478,7 +478,7 @@ func IterativeFindValue(key ID) []byte {
     		}
     	}
     		if shortlist_size == 0 {
-    			fmt.Printf("ERR\n")
+    			//fmt.Printf("ERR\n")
     			return nil
     		}
     	}

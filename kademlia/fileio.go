@@ -8,33 +8,46 @@ import (
     "log"
     "crypto/sha1"
     "encoding/hex"
-    "encoding/binary"
     "strings"
-    "bytes"
 )
 
 var gPacketSize int = 16384 // == 16kb 
 
 type FileInfo struct {
     FileSize int64
+    FileName string
     FileID ID
     Complete bool
     PacketIDs []ID
+    
 }
 
 type FileHeader struct {
     Info FileInfo
-    FileName string
     FilePath string
     PacketsLoaded bool
     PacketDir string
     Packets map[ID]Packet
+    UpdateNodes []ID
 }
 
 type Packet struct {
     PacketID ID
     PacketSize int
     Data []byte
+}
+
+type DirInfo struct {
+    DirName string
+    DirID ID
+    Checksum ID
+}
+
+type Directory struct {
+    Info DirInfo
+    //Parent DirInfo
+    ChildDirs []DirInfo
+    Files []FileInfo
 }
 
 // get info for a file from the network
@@ -58,15 +71,15 @@ func (f *FileHeader) MakePackets() {
     numPackets := int(f.Info.FileSize)/gPacketSize
     
     // read the file into a byte array
-    fbytes, err := ioutil.ReadFile(f.FilePath)
+    fbytes, err := ioutil.ReadFile(gShareDirectory+f.FilePath)
     if err != nil {
         log.Fatal("ReadFile: ",err)
     }
     
     // save the current directory and switch to sharing dir. for this file
     curDir,_ := os.Getwd()
-    nameparts := strings.Split(f.FileName, ".")
-    f.PacketDir = gShareDirectory + "/" + strings.Join(nameparts[:len(nameparts)-1],"")
+    nameparts := strings.Split(f.Info.FileName, ".")
+    f.PacketDir = gDataDirectory + "/" + strings.Join(nameparts[:len(nameparts)-1],"")
     os.Mkdir(f.PacketDir,os.ModeDir | 0x1ff)
     os.Chdir(f.PacketDir)
     
@@ -74,7 +87,7 @@ func (f *FileHeader) MakePackets() {
     i := 0
     for ; i < numPackets; i++ {
         data := fbytes[i*gPacketSize:(i+1)*gPacketSize]
-        fname := f.FileName + "." + strconv.Itoa(i+1)
+        fname := f.Info.FileName + "." + strconv.Itoa(i+1)
         file, err := os.Create(fname)
         if err != nil {
             log.Fatal("Create: ",err)
@@ -84,7 +97,7 @@ func (f *FileHeader) MakePackets() {
     }
     if int(f.Info.FileSize) % gPacketSize != 0 {
         data := fbytes[i*gPacketSize:]
-        fname := f.FileName + "." + strconv.Itoa(i+1)
+        fname := f.Info.FileName + "." + strconv.Itoa(i+1)
         file, err := os.Create(fname)
         if err != nil {
             log.Fatal("Create: ",err)
@@ -131,22 +144,19 @@ func (f *FileHeader) LoadPackets() {
         f.Packets[p.PacketID] = p
     }
     os.Chdir(curDir)
-    log.Printf("%v\n",f.Packets)
     return
 }
 
 // join all packets into a single file
-func (f *FileHeader) JoinPackets() {
-    // gShareDirectory_TEMP := "/Users/MoritzGellner/Desktop/Projects/Kademlia_DHT/Kademlia/sharingTEMP"
-    curDir,_ := os.Getwd()
+func (f *FileHeader) JoinPackets(loc string) {
+    //curDir,_ := os.Getwd()
     
-    file,err := os.Create(gShareDirectory+"/"+f.FileName)
+    file,err := os.Create(loc+f.Info.FileName)
     if err != nil {
         log.Fatal("os.Create: ",err)
     }
     
     dir,err := os.Open(f.PacketDir)
-    log.Printf("%v\n",f.PacketDir)
     if err != nil {
         log.Fatal("Open: ", err)
     }
@@ -155,69 +165,25 @@ func (f *FileHeader) JoinPackets() {
         log.Fatal("Readdir: ", err)
     }
     
-    os.Chdir(f.PacketDir)
+    //os.Chdir(f.PacketDir)
     
     var pos int64 = 0
     for i := 0; i < len(packet_files); i++ {
         fi := packet_files[i]
-        fbytes, err := ioutil.ReadFile(fi.Name())
-        if err != nil {
-            log.Fatal("ReadFile: ",err)
+        if !fi.IsDir() {
+            fbytes, err := ioutil.ReadFile(f.PacketDir+"/"+fi.Name())
+            if err != nil {
+                log.Fatal("ReadFile in JoinPackets: ",err)
+            }
+            increment,_ := file.WriteAt(fbytes,pos)
+            pos += int64(increment)
         }
-        increment,_ := file.WriteAt(fbytes,pos)
-        pos += int64(increment)
     }
     file.Close()
-    os.Chdir(curDir)
+    //os.Chdir(curDir)
     return
 }
 
-func (fi *FileInfo) Serialize() []byte {
-    buf := new(bytes.Buffer)
-	err := binary.Write(buf, binary.LittleEndian, fi.FileSize)
-    if err != nil {
-        log.Fatal("binary.Write:",err)
-    }
-    err = binary.Write(buf, binary.LittleEndian, fi.FileID)
-    if err != nil {
-        log.Fatal("binary.Write:",err)
-    }
-    // can't write bool's because it doesn't count as a fixed-size value for some reason >:(
-    var complete int16 
-    if fi.Complete {
-        complete = 1
-    } else { complete = 0 }
-    err = binary.Write(buf, binary.LittleEndian, complete)
-    if err != nil {
-        log.Fatal("binary.Write:",err)
-    }
-        err = binary.Write(buf, binary.LittleEndian, fi.PacketIDs)
-        if err != nil {
-            log.Fatal("binary.Write:",err)
-        }
-    
-    return buf.Bytes()
-}
-func (fi *FileInfo) Deserialize(b []byte) {
-    buf := bytes.NewBuffer(b)
-	err := binary.Read(buf, binary.LittleEndian, &fi.FileSize)
-	if err != nil {
-		log.Fatal("binary.Read:", err)
-	}
-    err = binary.Read(buf, binary.LittleEndian, &fi.FileID)
-	if err != nil {
-		log.Fatal("binary.Read:", err)
-	}
-    var complete int16
-    err = binary.Read(buf, binary.LittleEndian, &complete)
-	if err != nil {
-		log.Fatal("binary.Read:", err)
-	}
-    if complete == 0 {
-        fi.Complete = false
-    } else { fi.Complete = true }
-    err = binary.Read(buf, binary.LittleEndian, &fi.PacketIDs)
-} 
 // hash a string or Packet struct to a 160-bit ID
 func sha1hash(s string) ID {
     // used to generate file and packet IDs later

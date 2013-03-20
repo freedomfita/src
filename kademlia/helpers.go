@@ -112,7 +112,7 @@ func (k *Kademlia) next_open_spot(b_num int) {
   func (kadem *Kademlia) getBucket(dist ID) (Bucket,int) {
     bucketNum := dist.PrefixLen()-1
     if bucketNum == -1 {
-      return nil,-1
+      return kadem.K_Buckets[0],0
     }
     return kadem.K_Buckets[bucketNum], bucketNum
   }
