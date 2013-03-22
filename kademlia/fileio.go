@@ -50,11 +50,6 @@ type Directory struct {
     Files []FileInfo
 }
 
-// get info for a file from the network
-func GetFileInfo(fname string) (fi FileInfo) {
-    return fi
-}
-
 // check if a file has already been split into packets
 func (f *FileHeader) PacketsExist() bool {
     return false
