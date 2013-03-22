@@ -152,3 +152,21 @@ func (k *Kademlia) FindValue(req FindValueRequest, res *FindValueResult) error {
     res.Err = errors.New("Value not found")
     return nil
 }
+
+type UpdateListenerRequest struct {
+    MsgID ID
+    FileID ID
+    ListenerID ID
+}
+
+type UpdateListenerResult struct {
+    MsgID ID
+    Err error
+}
+
+func (k *Kademlia) AddUpdateListener(req UpdateListenerRequest, res *UpdateListenerResult) error {
+    res.MsgID = CopyID(req.MsgID)
+    fh := ThisNode.FileHeaders[req.FileID]
+    fh.UpdateNodes = append(fh.UpdateNodes,req.ListenerID)
+    return nil
+}

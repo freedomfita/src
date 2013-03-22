@@ -5,6 +5,7 @@ import (
     "log"
     "fmt"
     "strings"
+    "net/rpc"
 )
 
 //! TODO: allow user to set these, and set dynamically on run
@@ -69,11 +70,30 @@ func LoadFile(fi os.FileInfo, dir *Directory) {
     dir.Files = append(dir.Files,fh.Info)
 }
 
-func DownloadFile(fname string, dest string) {
+func DownloadFile(fname string, dest string, wantUpdate bool) {
     // calculate file ID
     fid := sha1hash(fname)
     // get the file header
-    result := IterativeFindValue(fid)
+    result,node := IterativeFindValue(fid)
+    // if we want to be notified when this file changes, let the node with the data know
+    if wantUpdate {
+        hostPortStr := get_host_port(&node)
+        client, err := rpc.DialHTTP("tcp", hostPortStr)
+        if err != nil {
+            log.Fatal("rpc.DialHTTP:",err)
+        }
+        req := new(UpdateListenerRequest)
+        req.MsgID = NewRandomID()
+        req.FileID = fid
+        req.ListenerID = ThisNode.ThisContact.NodeID
+        
+        var res FindValueResult
+        err = client.Call("Kademlia.AddUpdateListener", req, &res)
+        if err != nil {
+            log.Fatal("Call: ", err)
+        }
+        client.Close()
+    }
     var fi FileInfo
     if result == nil {
         fmt.Printf("Error: could not find file associated with key %v\n",fid)
@@ -108,9 +128,14 @@ func DownloadFile(fname string, dest string) {
     return
 }
 
-func DownloadDirectory(dirname string, dest string) {
+func DownloadDirectory(dirname string, dest string, updateDir string, wantUpdate bool) {
+    if wantUpdate == false {
+        if updateDir == dirname {
+            wantUpdate = true
+        }
+    }
     dirid := sha1hash(dirname)
-    result := IterativeFindValue(dirid)
+    result,_ := IterativeFindValue(dirid)
     var dir Directory
     if result == nil {
         fmt.Printf("Error: could not find directory associated with key %v\n",dirid)
@@ -122,12 +147,12 @@ func DownloadDirectory(dirname string, dest string) {
     
     for fi := 0; fi < len(dir.Files); fi++ {
         curFile := dir.Files[fi]
-        DownloadFile(curFile.FileName,dest+dirname)
+        DownloadFile(curFile.FileName,dest+dirname,wantUpdate)
     }
     
     for di := 0; di < len(dir.ChildDirs); di++ {
         curChild := dir.ChildDirs[di].DirName
-        DownloadDirectory(curChild,dest)
+        DownloadDirectory(curChild,dest,updateDir,wantUpdate)
     }
     fmt.Printf("Directory with key %v downloaded successfully.\n",dirid)
     
@@ -140,7 +165,7 @@ func GetPacket(fh FileHeader, packetID ID, doneChannel chan int,pnum int) {
         return
     }
     // if we don't have the packet, get it from the network
-    packetData := IterativeFindValue(packetID)
+    packetData,_ := IterativeFindValue(packetID)
     // deserialize the raw byte stream
     var packet Packet
     packet.Deserialize(packetData)

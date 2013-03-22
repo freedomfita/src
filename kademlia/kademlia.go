@@ -389,12 +389,13 @@ func IterativeFindNode(id ID) Bucket {
 printf("%v %v\n", ID, value), where ID refers to the node that finally
 returned the value. If you do not find a value, print "ERR".
 */
-func IterativeFindValue(key ID) []byte {
-
+func IterativeFindValue(key ID) ([]byte, Contact) {
+    // dummy to return on error
+    var dummy Contact
 	// check if this node has the value
 	if ThisNode.Data[key] != nil {
 		//fmt.Printf("%v %v\n", ThisNode.ThisContact.NodeID, ThisNode.Data[key])
-		return ThisNode.Data[key]
+		return ThisNode.Data[key], *ThisNode.ThisContact
 	}
   // if this node doesn't have the value, search among the known nodes
 	const alpha = 3
@@ -440,8 +441,8 @@ func IterativeFindValue(key ID) []byte {
 		
 				client, err := rpc.DialHTTP("tcp", hostPortStr)
 				if err != nil {
-          // if we can't contact the node, remove it from shortlist
-          shortlist[i] = nil
+                    // if we can't contact the node, remove it from shortlist
+                    shortlist[i] = nil
 				} else {
 					req := new(FindValueRequest)
 					req.MsgID = NewRandomID()
@@ -457,7 +458,7 @@ func IterativeFindValue(key ID) []byte {
     				if res.Err == nil {
               				//fmt.Printf("OK\n")
     					fmt.Printf("%v %v\n", shortlist[i].NodeID, res.Value)
-    					return res.Value
+    					return res.Value, *contacted_nodes[i]
     				} else {
     					offset:= 20 * i
     					resBucket := foundNodeArr_to_Bucket(res.Nodes)
@@ -479,11 +480,11 @@ func IterativeFindValue(key ID) []byte {
     	}
     		if shortlist_size == 0 {
     			//fmt.Printf("ERR\n")
-    			return nil
+    			return nil,dummy
     		}
     	}
     }
-    return nil
+    return nil,dummy
 }
 
 func (k *Kademlia) find_closest(req_id ID, count int) []*Contact{
