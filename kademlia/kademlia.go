@@ -31,6 +31,8 @@ type Kademlia struct {
     K_Buckets []Bucket
     F_Buckets []Bucket
     Data map[ID]([]byte)
+    Votes_Acquired int
+    Vote_Total int
     // stuff for p2p
     ShareDir string
     Lock_Acquired ID //this will be the FileID, if no lock, null
@@ -129,7 +131,7 @@ func authenticate(hostAndPort string) int {
 	return res.isFriend
 }
 
-func acquire_lock(hostAndPort string, FileID ID) int {
+func acquire_lock(hostAndPort string, FileID ID) {
 	client, err := rpc.DialHTTP("tcp", hostAndPort)
 	if err != nil {
 		log.Fatal("DialHTTP: ", err)
@@ -144,12 +146,21 @@ func acquire_lock(hostAndPort string, FileID ID) int {
         client.Close()
     	if err != nil {
     	//Maybe change to not fatal, rather a fail
-        log.Fatal("Call: ", err)
+        //log.Fatal("Call: ", err)
+        	//assume that if client fails to respond, it does not have lock
+        	ThisNode.Votes_Acquired++
+        	ThisNode.Vote_Total++
     	}
-	return res.is_locked
+    	if res.is_locked == 0 {
+    		ThisNode.Votes_Acquired++
+    		ThisNode.Vote_Total++
+    	} else {
+    		ThisNode.Vote_Total++
+    	}
+	//return res.is_locked
 }
 
-func release_lock(hostAndPort string, FileID ID) int {
+func release_lock(hostAndPort string, FileID ID, f_path string) int {
 	client, err := rpc.DialHTTP("tcp", hostAndPort)
 	if err != nil {
 		log.Fatal("DialHTTP: ", err)

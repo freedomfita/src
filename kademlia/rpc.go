@@ -41,8 +41,8 @@ type LockResult struct {
 type UnlockRequest struct {
 	MsgID ID
 	FileID ID
+	FilePath string
 }
-
 type UnlockResult struct {
 	MsgID ID
 }
