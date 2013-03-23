@@ -40,6 +40,10 @@ func MainLoop() {
     gCmdMap["download_file"] = Command{ "download_file",1,do_download }
     gCmdMap["download_dir"] = Command{ "download_dir",3,do_download_dir }
     gCmdMap["run_tests"] = Command{ "run_tests",0,do_tests }
+    gCmdMap["testing"] = Command{"testing",0,do_Main_Testing}
+    gCmdMap["authenticate"] = Command{"authenticate",1,do_authenticate}
+    gCmdMap["lock"] = Command{"lock",1,request_lock}
+    gCmdMap["unlock"] = Command{"unlock",1,notify_release_lock}
     
     var listenStr,firstPeerStr string
     // By default, Go seeds its RNG with 1. This would cause every program to

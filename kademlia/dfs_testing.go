@@ -28,7 +28,7 @@ func (k *Kademlia) Local_Random_Nodes() []ID{
 
 
 func (k *Kademlia) Download_File_Testing() int {
-	id_list:= k.Local_Random_Nodes()
+	//id_list:= k.Local_Random_Nodes()
 	//now we have a list of nodes
 	for i:= 0; i< 1; i++ {
 		fmt.Printf("testing download file\n")

@@ -34,6 +34,7 @@ type Kademlia struct {
     Data map[ID]([]byte)
     Votes_Acquired int
     Vote_Total int
+    Votes_Needed int
     // stuff for p2p
     ShareDir string
     Lock_Acquired ID //this will be the FileID, if no lock, null
@@ -79,6 +80,7 @@ func Main_Testing() {
 	fmt.Printf("*****************\n*****************\n*****************\n")
 	error = ThisNode.Test_Locking()
 	fmt.Printf("*****************\n*****************\n*****************\n")
+	fmt.Printf("error = %d",error)//this is just to stop the warning
 }
 
 // execute the ping RPC given either a nodeID or a host:port pair
@@ -179,16 +181,56 @@ func (k *Kademlia) Notify_Release_Lock(f_id ID){
     fh := ThisNode.FileHeaders[fi.FileID]
 	os.Chmod(fh.FilePath, 555)
 	u_n_len := len(fh.UpdateNodes)
-	//now we have header, look in Update_Nodes for list of nodes to send request to
+	//now we have header, look in UpdateNodes for list of nodes to send request to
 	for i:=0; i<u_n_len;i++ {
-		if fh.UpdateNodes[i] { //we have NodeID
-			node := k.find_friend(fh.UpdateNodes[i])
-			s := []string{node.IPAddr, node.Port}
+			node := k.return_friend(fh.UpdateNodes[i])
+			p := strconv.Itoa(int(node.Port))
+			s := []string{node.IPAddr, p}
 			go release_lock(strings.Join(s,""), f_id, fh.FilePath)
-		} else {
-			break
+	}
+}
+
+func (k *Kademlia) find_friend(req_id ID) int{
+	//fmt.Printf("Prepare to Xor:\n|%v|\n|%v|\n", req_id, k.ThisContact.NodeID)
+	b_num := req_id.Xor(k.ThisContact.NodeID).PrefixLen() //get bucket number
+	
+	// if req_id == k.NodeID, b_num will be 160. In this case use b_num = 159
+	if b_num == 160{ 
+    		b_num--
+	}
+	//MODIFIED * changing the function just to find the one node in corresponding bucket
+	//fmt.Printf("tried to access bucket %d\n",b_num)
+	b := k.F_Buckets[b_num] //get corresponding bucket
+	for i:=0;i<len(b);i++{ //we copy all contacts from closest bucket
+		if b[i] == nil{
+			continue
+		} else if b[i].NodeID.Equals(req_id){
+			return 1
 		}
 	}
+	return 0
+}
+
+func (k *Kademlia) return_friend(req_id ID) Contact{
+	//fmt.Printf("Prepare to Xor:\n|%v|\n|%v|\n", req_id, k.ThisContact.NodeID)
+	b_num := req_id.Xor(k.ThisContact.NodeID).PrefixLen() //get bucket number
+	
+	// if req_id == k.NodeID, b_num will be 160. In this case use b_num = 159
+	if b_num == 160{ 
+    		b_num--
+	}
+	//MODIFIED * changing the function just to find the one node in corresponding bucket
+	//fmt.Printf("tried to access bucket %d\n",b_num)
+	b := k.F_Buckets[b_num] //get corresponding bucket
+	for i:=0;i<len(b);i++{ //we copy all contacts from closest bucket
+		if b[i] == nil{
+			continue
+		} else if b[i].NodeID.Equals(req_id){
+			return *b[i]
+		}
+	}
+	c := new(Contact)
+	return *c
 }
 
 func (k *Kademlia) Request_Lock(f_id ID) {
@@ -197,17 +239,15 @@ func (k *Kademlia) Request_Lock(f_id ID) {
 	f_header := IterativeFindValue(f_id)
 	var fi FileInfo
 	fi.Deserialize(f_header)
-	u_n_len := len(fi.Update_Nodes)
+	fh := ThisNode.FileHeaders[fi.FileID]
+	u_n_len := len(fh.UpdateNodes)
 	k.Votes_Needed = u_n_len
-	//now we have header, look in Update_Nodes for list of nodes to send request to
+	//now we have header, look in UpdateNodes for list of nodes to send request to
 	for i:=0; i<u_n_len;i++ {
-		if fi.Update_Nodes[i] { //we have NodeID
-			node := k.find_friend(fi.Update_Nodes[i])
-			s := []string{node.IPAddr, node.Port}
+			node := k.return_friend(fh.UpdateNodes[i])
+			p := strconv.Itoa(int(node.Port))
+			s := []string{node.IPAddr, p}
 			go acquire_lock(strings.Join(s,""), f_id)
-		} else{
-			break
-		}
 	}
 	//wait until we have all votes * in event a node is down, 
 	//we count that as unlocked vote
@@ -233,7 +273,7 @@ func (k *Kademlia) Request_Lock(f_id ID) {
 		//third = world permissions
 		//so we set it to 755 when they have the lock.
 		k.Lock_Acquired = f_id
-		os.Chmod(f_header.FilePath, 755)
+		os.Chmod(fh.FilePath, 755)
 	}
 	
 }

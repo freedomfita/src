@@ -5,6 +5,27 @@ import (
     "log"
     "kademlia"
 )
+func do_main_testing(argv []string){
+	kademlia.do_Main_Testing()
+}
+
+func notify_release_lock(argv []string){
+	id, err := kademlia.FromString(argv[1])
+	if err != nil {
+		log.Fatal("Find Node: ",err)
+	}
+	kademlia.Notify_Release_Lock(id)
+}
+func request_lock(argv []string){
+	id, err := kademlia.FromString(argv[1])
+	if err != nil {
+		log.Fatal("Find Node: ",err)
+	}
+	kademlia.Request_Lock(id)	
+}
+func do_authenticate(argv []string){
+	kademlia.authenticate(argv[1])
+}
 
 func do_quit(argv []string) {
     os.Exit(0)
