@@ -32,7 +32,7 @@ func (k *Kademlia) Download_File_Testing() int {
 	//now we have a list of nodes
 	for i:= 0; i< 1; i++ {
 		fmt.Printf("testing download file\n")
-		DownloadFile("Homework1.pdf", "sharing")
+		DownloadFile("Homework1.pdf", "/sharing/",false)
 		fmt.Printf("made it through test download: %d\n",i)
 	}
 	return 1
@@ -40,11 +40,11 @@ func (k *Kademlia) Download_File_Testing() int {
 
 func (k *Kademlia) Test_Locking() int {
 	fmt.Printf("starting lock testing\n")
-	file_info := GetFileInfo("Homework1.pdf")
-	fmt.Printf("File ID: %s\n",file_info.FileID)
-	k.Request_Lock(file_info.FileID)
+	file_info := k.FileHeaders[sha1hash("Homework1.pdf")]
+	fmt.Printf("File ID: %s\n",file_info.Info.FileID)
+	k.Request_Lock(file_info.Info.FileID)
 	fmt.Printf("made it through lock\n")
-	k.Notify_Release_Lock(file_info.FileID)
+	k.Notify_Release_Lock(file_info.Info.FileID)
 	fmt.Printf("made it through unlock\n")
 	return 1
 }

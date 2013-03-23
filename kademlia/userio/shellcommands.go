@@ -6,7 +6,7 @@ import (
     "kademlia"
 )
 func do_main_testing(argv []string){
-	kademlia.do_Main_Testing()
+	kademlia.Main_Testing()
 }
 
 func notify_release_lock(argv []string){
@@ -14,17 +14,17 @@ func notify_release_lock(argv []string){
 	if err != nil {
 		log.Fatal("Find Node: ",err)
 	}
-	kademlia.Notify_Release_Lock(id)
+	kademlia.ThisNode.Notify_Release_Lock(id)
 }
 func request_lock(argv []string){
 	id, err := kademlia.FromString(argv[1])
 	if err != nil {
 		log.Fatal("Find Node: ",err)
 	}
-	kademlia.Request_Lock(id)	
+	kademlia.ThisNode.Request_Lock(id)
 }
 func do_authenticate(argv []string){
-	kademlia.authenticate(argv[1])
+	kademlia.Authenticate(argv[1])
 }
 
 func do_quit(argv []string) {
@@ -78,14 +78,9 @@ func do_whoami(argv []string) {
 }
 
 func do_download(argv []string) {
-    log.Fatal("TODO")
     kademlia.DownloadFile(argv[1],argv[2],false)
 }
 
 func do_download_dir(argv []string) {
     kademlia.DownloadDirectory(argv[1],argv[2],argv[3],false)
-}
-
-func do_tests(argv []string) {
-    kademlia.RunTests(kademlia.ThisNode)
 }

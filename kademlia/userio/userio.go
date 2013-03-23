@@ -39,8 +39,7 @@ func MainLoop() {
     gCmdMap["whoami"] = Command{ "whoami",0,do_whoami }
     gCmdMap["download_file"] = Command{ "download_file",1,do_download }
     gCmdMap["download_dir"] = Command{ "download_dir",3,do_download_dir }
-    gCmdMap["run_tests"] = Command{ "run_tests",0,do_tests }
-    gCmdMap["testing"] = Command{"testing",0,do_Main_Testing}
+    gCmdMap["testing"] = Command{"testing",0,do_main_testing}
     gCmdMap["authenticate"] = Command{"authenticate",1,do_authenticate}
     gCmdMap["lock"] = Command{"lock",1,request_lock}
     gCmdMap["unlock"] = Command{"unlock",1,notify_release_lock}

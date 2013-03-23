@@ -4,28 +4,9 @@ package kademlia
 import (
 	"fmt"
 	"log"
-    "os"
 )
 
-const num_test_nodes = 150
-
 func (k *Kademlia) Random_Nodes() []ID{
-	id_list := make([]ID, num_test_nodes)
-	for i:=0;i<num_test_nodes;i++{
-		c:= new(Contact)
-		c.NodeID = NewRandomID()
-		id_list[i] = c.NodeID
-		c.IPAddr = "localhost"
-		c.Port = 7890
-		b_num := c.NodeID.Xor(k.ThisContact.NodeID).PrefixLen()
-		k.next_open_spot(b_num)
-		k.K_Buckets[b_num][0] = c
-	}
-	return id_list
-
-}
-//use localhost for these nodes
-func (k *Kademlia) Local_Random_Nodes() []ID{
 	id_list := make([]ID, num_test_nodes)
 	for i:=0;i<num_test_nodes;i++{
 		c:= new(Contact)
@@ -158,30 +139,5 @@ func (k *Kademlia) Print_KBuckets_bare(){
 	
 		
 	}
-}
-
-func TestSerialization() {
-                
-}
-
-func TestLocks() {
-            
-}
-
-func TestFileDownload() {
-
-}
-            
-func RunTests(k *Kademlia) {
-    log.Printf("Testing basic DHT functionality.\n====================\n")
-    TestDHTFunctionality(k)
-    log.Printf("Testing serialization.\n====================\n")
-    TestSerialization()
-    log.Printf("Testing locks.\n====================\n")
-    // ** Just insert your testing stuff here **
-    log.Printf("Testing file download.\n====================\n")
-    
-    TestFileDownload()
-    log.Printf("All tests OK.\n")
 }
 
