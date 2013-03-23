@@ -65,6 +65,6 @@ func do_download_dir(argv []string) {
     kademlia.DownloadDirectory(argv[1],argv[2],argv[3],false)
 }
 
-func do_help() {
-
+func do_tests(argv []string) {
+    kademlia.RunTests(kademlia.ThisNode)
 }

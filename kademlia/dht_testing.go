@@ -1,5 +1,5 @@
 package kademlia
-/*
+
 //only populates the kbuckets randomly, not by distance, more just to check things
 import (
 	"fmt"
@@ -8,14 +8,13 @@ import (
 
 const num_test_nodes = 150
 
-//use MoritzIP for these nodes
 func (k *Kademlia) Random_Nodes() []ID{
 	id_list := make([]ID, num_test_nodes)
 	for i:=0;i<num_test_nodes;i++{
 		c:= new(Contact)
 		c.NodeID = NewRandomID()
 		id_list[i] = c.NodeID
-		c.IPAddr = "192.168.0.123"
+		c.IPAddr = "localhost"
 		c.Port = 7890
 		b_num := c.NodeID.Xor(k.ThisContact.NodeID).PrefixLen()
 		k.next_open_spot(b_num)
@@ -42,7 +41,7 @@ func (k *Kademlia) Local_Random_Nodes() []ID{
 }
 
 //takes in id_list from Random_Nodes and runs test
-func Main_Testing(k *Kademlia){
+func TestDHTFunctionality(k *Kademlia){
 	k.ThisContact.IPAddr= "localhost"
 	k.ThisContact.Port = 7890
 	id_list := k.Local_Random_Nodes()
@@ -117,8 +116,8 @@ func Test_Iterative_Store() []ID{
 
 func Test_Iterative_Find_Value(id_list []ID) {
 	for i:=0;i<len(id_list);i++{
-		err := IterativeFindValue(id_list[i])
-		if err != 0 {
+		val,_ := IterativeFindValue(id_list[i])
+		if val == nil {
 			fmt.Printf("ERROR at IterativeFindValue for %v\n",id_list[i])
 		}
 	}
@@ -132,7 +131,7 @@ func (k *Kademlia) Print_KBuckets(){
 			/*if kb[j] == nil{
 				fmt.Printf("Bucket #%v printed with %v elements\n",i,j)
 				break
-			} else {* /
+			} else {*/
 			fmt.Printf("B%v E%v :%v\n", i,j,kb[j])
 			//}
 			
@@ -160,8 +159,27 @@ func (k *Kademlia) Print_KBuckets_bare(){
 	}
 }
 
+func TestSerialization() {
+                
+}
 
+func TestLocks() {
+            
+}
 
-*/
-
+func TestFileDownload() {
+            
+}
+            
+func RunTests(k *Kademlia) {
+    log.Printf("Testing basic DHT functionality.\n====================\n")
+    TestDHTFunctionality(k)
+    log.Printf("Testing serialization.\n====================\n")
+    TestSerialization()
+    log.Printf("Testing locks.\n====================\n")
+    // ** Just insert your testing stuff here **
+    log.Printf("Testing file download.\n====================\n")
+    TestFileDownload()
+    log.Printf("All tests OK.\n")
+}
 

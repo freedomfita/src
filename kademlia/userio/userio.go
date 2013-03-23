@@ -39,6 +39,7 @@ func MainLoop() {
     gCmdMap["whoami"] = Command{ "whoami",0,do_whoami }
     gCmdMap["download_file"] = Command{ "download_file",1,do_download }
     gCmdMap["download_dir"] = Command{ "download_dir",3,do_download_dir }
+    gCmdMap["run_tests"] = Command{ "run_tests",0,do_tests }
     
     var listenStr,firstPeerStr string
     // By default, Go seeds its RNG with 1. This would cause every program to
