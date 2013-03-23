@@ -1,8 +1,4 @@
-package authentication
-
-import (
-    "kademlia"
-)
+package kademlia
 
 type User struct {
     username string

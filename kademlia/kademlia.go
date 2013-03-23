@@ -11,6 +11,7 @@ import (
     "net/rpc"
     "strings"
     "strconv"
+    "os"
 )
 
 const NumBuckets = 160
@@ -69,6 +70,15 @@ func (bucket Bucket) FindNode(id ID) *Contact {
         }
     }
     return nil
+}
+
+
+func Main_Testing() {
+	fmt.Printf("*****************\n*****************\n*****************\n")
+	error := ThisNode.Download_File_Testing()
+	fmt.Printf("*****************\n*****************\n*****************\n")
+	error = ThisNode.Test_Locking()
+	fmt.Printf("*****************\n*****************\n*****************\n")
 }
 
 // execute the ping RPC given either a nodeID or a host:port pair
@@ -160,6 +170,73 @@ func acquire_lock(hostAndPort string, FileID ID) {
 	//return res.is_locked
 }
 
+func (k *Kademlia) Notify_Release_Lock(f_id ID){
+	id_thing := new(ID)
+	k.Lock_Acquired = *id_thing
+	f_header := IterativeFindValue(f_id)
+	var fi FileInfo
+	fi.Deserialize(f_header)
+	os.Chmod(fi.FilePath, 555)
+	u_n_len := len(fi.Update_Nodes)
+	//now we have header, look in Update_Nodes for list of nodes to send request to
+	for i:=0; i<u_n_len;i++ {
+		if fi.Update_Nodes[i] { //we have NodeID
+			node := k.find_friend(fi.Update_Nodes[i])
+			s := []string{node.IPAddr, node.Port}
+			go release_lock(strings.Join(s,""), f_id, fi.FilePath)
+		} else {
+			break
+		}
+	}
+}
+
+func (k *Kademlia) Request_Lock(f_id ID) {
+	// here we loop through and do acquire_lock to each friend with the file.
+	
+	f_header := IterativeFindValue(f_id)
+	var fi FileInfo
+	fi.Deserialize(f_header)
+	u_n_len := len(fi.Update_Nodes)
+	k.Votes_Needed = u_n_len
+	//now we have header, look in Update_Nodes for list of nodes to send request to
+	for i:=0; i<u_n_len;i++ {
+		if fi.Update_Nodes[i] { //we have NodeID
+			node := k.find_friend(fi.Update_Nodes[i])
+			s := []string{node.IPAddr, node.Port}
+			go acquire_lock(strings.Join(s,""), f_id)
+		} else{
+			break
+		}
+	}
+	//wait until we have all votes * in event a node is down, 
+	//we count that as unlocked vote
+	for ; k.Vote_Total != u_n_len; {
+		//do nothing, we wait until all votes received. Not practical in
+		//a real system by any means, but I couldn't think of a simple
+		//better way to do it without worrying about timers and shit
+		//which aren't hard to implement but I don't think are necessary
+		//for a project of this scale. Besides, even when a node is down
+		//we will still get a correct vote total. Hopefully
+	}
+	//Now we have all votes
+	// ***LOOK HERE FOR CHMOD INFO *** 
+	if k.Vote_Total == k.Votes_Acquired {
+		//we have lock, change permissions on file
+		//files should initially be
+		//os.Chmod(f_header.FilePath, 555) 
+		//read = 4
+		//write = 2
+		//execute = 1
+		//first number = owner permission
+		//second = group permissions
+		//third = world permissions
+		//so we set it to 755 when they have the lock.
+		k.Lock_Acquired = f_id
+		os.Chmod(f_header.FilePath, 755)
+	}
+	
+}
+
 func release_lock(hostAndPort string, FileID ID, f_path string) int {
 	client, err := rpc.DialHTTP("tcp", hostAndPort)
 	if err != nil {
@@ -171,7 +248,7 @@ func release_lock(hostAndPort string, FileID ID, f_path string) int {
 	req.FileID = FileID
 	    	
 	var res LockResult
-	err = client.Call("Kademlia.Acquire_Lock", req, &res)
+	err = client.Call("Kademlia.Release_Lock", req, &res)
 	client.Close()
 	if err != nil {
 	    	//Maybe change to not fatal, rather a fail
@@ -400,13 +477,12 @@ func IterativeFindNode(id ID) Bucket {
 printf("%v %v\n", ID, value), where ID refers to the node that finally
 returned the value. If you do not find a value, print "ERR".
 */
-func IterativeFindValue(key ID) ([]byte, Contact) {
-    // dummy to return on error
-    var dummy Contact
+func IterativeFindValue(key ID) []byte {
+
 	// check if this node has the value
 	if ThisNode.Data[key] != nil {
 		//fmt.Printf("%v %v\n", ThisNode.ThisContact.NodeID, ThisNode.Data[key])
-		return ThisNode.Data[key], *ThisNode.ThisContact
+		return ThisNode.Data[key]
 	}
   // if this node doesn't have the value, search among the known nodes
 	const alpha = 3
@@ -452,8 +528,8 @@ func IterativeFindValue(key ID) ([]byte, Contact) {
 		
 				client, err := rpc.DialHTTP("tcp", hostPortStr)
 				if err != nil {
-                    // if we can't contact the node, remove it from shortlist
-                    shortlist[i] = nil
+          // if we can't contact the node, remove it from shortlist
+          shortlist[i] = nil
 				} else {
 					req := new(FindValueRequest)
 					req.MsgID = NewRandomID()
@@ -469,7 +545,7 @@ func IterativeFindValue(key ID) ([]byte, Contact) {
     				if res.Err == nil {
               				//fmt.Printf("OK\n")
     					fmt.Printf("%v %v\n", shortlist[i].NodeID, res.Value)
-    					return res.Value, *contacted_nodes[i]
+    					return res.Value
     				} else {
     					offset:= 20 * i
     					resBucket := foundNodeArr_to_Bucket(res.Nodes)
@@ -491,11 +567,11 @@ func IterativeFindValue(key ID) ([]byte, Contact) {
     	}
     		if shortlist_size == 0 {
     			//fmt.Printf("ERR\n")
-    			return nil,dummy
+    			return nil
     		}
     	}
     }
-    return nil,dummy
+    return nil
 }
 
 func (k *Kademlia) find_closest(req_id ID, count int) []*Contact{
