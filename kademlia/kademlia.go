@@ -176,14 +176,15 @@ func (k *Kademlia) Notify_Release_Lock(f_id ID){
 	f_header := IterativeFindValue(f_id)
 	var fi FileInfo
 	fi.Deserialize(f_header)
-	os.Chmod(fi.FilePath, 555)
-	u_n_len := len(fi.Update_Nodes)
+    fh := ThisNode.FileHeaders[fi.FileID]
+	os.Chmod(fh.FilePath, 555)
+	u_n_len := len(fh.UpdateNodes)
 	//now we have header, look in Update_Nodes for list of nodes to send request to
 	for i:=0; i<u_n_len;i++ {
-		if fi.Update_Nodes[i] { //we have NodeID
-			node := k.find_friend(fi.Update_Nodes[i])
+		if fh.UpdateNodes[i] { //we have NodeID
+			node := k.find_friend(fh.UpdateNodes[i])
 			s := []string{node.IPAddr, node.Port}
-			go release_lock(strings.Join(s,""), f_id, fi.FilePath)
+			go release_lock(strings.Join(s,""), f_id, fh.FilePath)
 		} else {
 			break
 		}
