@@ -4,6 +4,7 @@ package kademlia
 import (
 	"fmt"
 	"log"
+    "os"
 )
 
 const num_test_nodes = 150
@@ -168,7 +169,7 @@ func TestLocks() {
 }
 
 func TestFileDownload() {
-            
+
 }
             
 func RunTests(k *Kademlia) {
@@ -179,6 +180,7 @@ func RunTests(k *Kademlia) {
     log.Printf("Testing locks.\n====================\n")
     // ** Just insert your testing stuff here **
     log.Printf("Testing file download.\n====================\n")
+    
     TestFileDownload()
     log.Printf("All tests OK.\n")
 }
